@@ -180,6 +180,20 @@ io.on('connection', (socket) => {
     io.to(user.room).emit('action_roll_result', { text, heroName: hero.name });
   });
 
+    socket.on('reset_dice_pool', () => {
+        const user = users.get(socket.id);
+        const hero = socket.hero;
+        if (!user || !user.room) {
+        socket.emit('error', 'Not in a room');
+        return;
+        }
+        if (!hero) {
+            socket.emit('error', 'EMs don\'t make forced rolls!');
+            return;
+        }
+        hero.resetDicePool();
+        socket.emit('dice_pool_reset', { heroName: hero.name });
+    });
 
   // Send message to room
   socket.on('send_message', (message) => {
