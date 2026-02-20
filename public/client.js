@@ -99,6 +99,18 @@ socket.on('action_roll_result', (data) => {
   messages.scrollTop = messages.scrollHeight;
 });
 
+socket.on('dice_pool_reset', (data) => {
+  const { heroName } = data;
+  const messageEl = document.createElement('div');
+  messageEl.className = 'message action-roll-result';
+  messageEl.innerHTML = `
+    <div class="message-heroname">${heroName}</div>
+    <div class="message-text"><strong>Dice Pool Reset!</strong></div>
+  `;
+  messages.appendChild(messageEl);
+  messages.scrollTop = messages.scrollHeight;
+})
+
 socket.on('error', (error) => {
   showError(error);
 });
@@ -137,16 +149,16 @@ function joinRoom(roomId) {
     showError('Hero name cannot be empty');
     return;
   }
-  let heroArchetypeId = prompt("Enter your hero's archetype ID (number):");
-  if (!heroArchetypeId || isNaN(heroArchetypeId)) {
-    showError('Hero archetype ID must be a number');
-    return;
-  }
-  let heroPathId = prompt("Enter your hero's path ID (number):");
-  if (!heroPathId || isNaN(heroPathId)) {
-    showError('Hero path ID must be a number');
-    return;
-  }
+  let heroArchetypeId = 1; // prompt("Enter your hero's archetype ID (number):");
+  // if (!heroArchetypeId || isNaN(heroArchetypeId)) {
+  //   showError('Hero archetype ID must be a number');
+  //   return;
+  // }
+  let heroPathId = 1; //prompt("Enter your hero's path ID (number):");
+  // if (!heroPathId || isNaN(heroPathId)) {
+  //   showError('Hero path ID must be a number');
+  //   return;
+  // }
   data = { roomId, heroName: heroName.trim(), heroArchetypeId: parseInt(heroArchetypeId), heroPathId: parseInt(heroPathId) };
   socket.emit('join_room', data );
 }
@@ -225,12 +237,16 @@ function showSuccess(message) {
   }, 3000);
 }
 
-function actionRoll() {
+actionRoll = () => {
   socket.emit('action_roll');
 }
 
 forcedRoll = () => {
   socket.emit('forced_roll');
+}
+
+resetDicePool = () => {
+  socket.emit('reset_dice_pool');
 }
 
 function escapeHtml(text) {

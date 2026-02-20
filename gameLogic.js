@@ -103,6 +103,14 @@ class Hero {
         return this.rollDice();
     }
 
+    resetDicePool = () => {
+        this.dicePool = {
+            hero: 0,
+            red: 0,
+            black: 0,
+        };
+    }   
+
 }
 
 export { Hero };
