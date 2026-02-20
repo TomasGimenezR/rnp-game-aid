@@ -78,7 +78,7 @@ socket.on('new_message', (data) => {
     messageEl.className = 'message';
     const time = new Date(data.timestamp).toLocaleTimeString();
     messageEl.innerHTML = `
-      <div class="message-heroname">${data.heroName}</div>
+      <div class="message-heroname">${data.username}</div>
       <div class="message-text">${escapeHtml(data.message)}</div>
       <div class="message-time">${time}</div>
     `;
