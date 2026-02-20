@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
+  <title>R&P! Game Aid</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img id="rnp-logo" src="imgs/rnp_logo.png" alt="R&P Logo">
+      <h1>Virtual Game Aid</h1>
+      <div class="status" id="status">Not connected</div>
+    </div>
+
+    <div class="error" id="error"></div>
+    <div class="success" id="success"></div>
+
+    <div class="login-section" id="loginSection">
+      <h2>Login</h2>
+      <div class="input-group">
+        <input type="text" id="usernameInput" placeholder="Enter your username" />
+        <button onclick="login()">Login</button>
+      </div>
+    </div>
+
+    <div class="main-content" id="mainContent">
+      <!-- Rooms Section -->
+      <div class="section">
+        <h2>Rooms</h2>
+
+        <h3>Start New Game as EM</h3>
+        <div class="create-room">
+          <input type="text" id="roomNameInput" placeholder="Enter room name" />
+          <button onclick="createRoom()">Create</button>
+        </div>
+
+        <h3>Available Rooms</h3>
+        <div class="rooms-list" id="roomsList">
+          <p style="color: #999; text-align: center;">No rooms available</p>
+        </div>
+      </div>
+
+      <!-- Chat Section -->
+      <div class="section">
+        <h2>Chat</h2>
+
+        <div id="currentRoom" style="display: none;">
+          <div class="current-room">
+            <div class="current-room-header">
+              <div class="current-room-name" id="currentRoomName"></div>
+              <button class="leave-button" onclick="leaveRoom()">Leave</button>
+            </div>
+            <div class="room-members">
+              <div class="room-members-label">Members:</div>
+              <div class="room-members-list" id="membersList"></div>
+            </div>
+          </div>
+
+          <div id="hope-tracker">
+            <h3>Hope:</h3>
+          </div>
+
+          <div class="chat-area">
+            <div class="messages" id="messages"></div>
+            <div class="message-input">
+              <input type="text" id="messageInput" placeholder="Type a message..." />
+              <button onclick="sendMessage()">Send</button>
+            </div>
+            <div>
+                <button onClick="actionRoll()">Action Roll!</button>
+                <button onClick="forcedRoll()">Forced Roll!</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="noRoom" class="no-room">
+          Select or create a room to start chatting
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="client.js"></script>
+</body>
+</html>
