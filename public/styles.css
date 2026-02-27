@@ -27,6 +27,27 @@
       padding: 30px;
     }
 
+    .game-actions div {
+      display: flex;
+      justify-content: center;
+      padding: 0.1em;
+    }
+
+    .game-actions div {
+      margin: 0.2em;
+    }
+    
+    .game-actions div .orange-btn {
+      background-color: #f0a031;
+    }
+
+    .game-actions div button {
+      background-color: #ff7878;
+      border-width: medium;
+      padding: 0.2em;
+      margin-left: 0.4em;
+    }
+
     .header {
       text-align: center;
       margin-bottom: 30px;
@@ -112,7 +133,7 @@
 
     .section h2 {
       color: #333;
-      margin-bottom: 15px;
+      margin-bottom: 10px;
       font-size: 18px;
     }
 
@@ -213,11 +234,13 @@
     }
 
     .current-room {
-      padding: 20px;
+      padding-right: 15px;
+      padding-left: 15px;
+      padding-top: 15px;
       background: white;
       border: 2px solid #667eea;
       border-radius: 8px;
-      margin-bottom: 20px;
+      margin-bottom: 12px;
     }
 
     .current-room-header {

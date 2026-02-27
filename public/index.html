@@ -70,19 +70,22 @@
               <input type="text" id="messageInput" placeholder="Type a message..." />
               <button onclick="sendMessage()">Send</button>
             </div>
-            <div>
-                <button onclick="actionRoll()">Action Roll!</button>
-                <button onclick="forcedRoll()">Forced Roll!</button>
-                <button onclick="resetDicePool()">Reset Dice Pool</button>
-                </br>
-                <button onclick="replaceForRedDie()">🟨 ▶ 🟥 </button>
-                <button onclick="replaceForBlackDie()">🟨 ▶ ⬛ </button>
-                <button onclick="addRedDie()">+🟥 </button>
-                <button onclick="addBlackDie()">+⬛</button>
-                </br>
-                <button onclick="spendHope()">Spend Hope</button>
-                <button onclick="spendDread()">Spend Dread</button>
-
+            <div class="game-actions">
+                <div>
+                  <button onclick="actionRoll()">Action Roll!</button>
+                  <button onclick="forcedRoll()">Forced Roll!</button>
+                  <button onclick="resetDicePool()">Reset Dice Pool</button>
+                </div>
+                <div>
+                  <button onclick="replaceForRedDie()" class="orange-btn">🟨 ▶ 🟥 </button>
+                  <button onclick="replaceForBlackDie()" class="orange-btn">🟨 ▶ ⬛ </button>
+                  <button onclick="addRedDie()" class="orange-btn">+🟥 </button>
+                  <button onclick="addBlackDie()" class="orange-btn">+⬛</button>
+                </div>
+                <div>
+                  <button onclick="spendHope()">Spend Hope</button>
+                  <button onclick="spendDread()">Spend Dread</button>
+                </div>
             </div>
           </div>
         </div>
