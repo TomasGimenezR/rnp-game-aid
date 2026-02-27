@@ -13,6 +13,7 @@ const roomNameInput = document.getElementById('roomNameInput');
 const roomsList = document.getElementById('roomsList');
 const messageInput = document.getElementById('messageInput');
 const messages = document.getElementById('messages');
+const hopeTracker = document.getElementById('hopeTracker');
 const currentRoomEl = document.getElementById('currentRoom');
 const noRoomEl = document.getElementById('noRoom');
 const currentRoomName = document.getElementById('currentRoomName');
@@ -88,16 +89,53 @@ socket.on('new_message', (data) => {
 });
 
 socket.on('action_roll_result', (data) => {
-  const { text, heroName } = data;
+  const { text } = data;
+  let { hero } = data;
+  if(hero == null)
+    hero = { name: 'Unknown Hero' }; // Fallback in case hero data is missing
   const messageEl = document.createElement('div');
   messageEl.className = 'message action-roll-result';
   messageEl.innerHTML = `
-    <div class="message-heroname">${heroName}</div>
+    <div class="message-heroname">${hero.name}</div>
     <div class="message-text"><strong>Action Roll Results:</strong> ${text}</div>
   `;
   messages.appendChild(messageEl);
   messages.scrollTop = messages.scrollHeight;
 });
+
+socket.on('show:hope', (data) => {
+  const { hero } = data;
+  hopeTracker.innerHTML = `<p>Hope: ${hero.hope}</p>`;
+  console.log('The updated hero is ', hero);
+});
+
+socket.on('spend:hope', (data) => {
+  const { hero } = data;
+  hopeTracker.innerHTML = `<p>Hope: ${hero.hope}</p>`;
+  console.log('The updated hero is ', hero);
+  const messageEl = document.createElement('div');
+  messageEl.className = 'message action-roll-result';
+  messageEl.innerHTML = `
+    <div class="message-heroname">${hero.name}</div>
+    <div class="message-text"><strong>Spent Hope!</strong></div>
+  `;
+  messages.appendChild(messageEl);
+  messages.scrollTop = messages.scrollHeight;
+});
+
+socket.on('dice_pool_updated', (data) => {
+  const { heroName, dicePool } = data;
+  console.log('Dicepool', dicePool)
+  dicePoolText = "</br>" + "🟨 ".repeat(dicePool.hero) + "🟥 ".repeat(dicePool.red) + "⬛ ".repeat(dicePool.black);
+  const messageEl = document.createElement('div');
+  messageEl.className = 'message action-roll-result';
+  messageEl.innerHTML = `
+    <div class="message-heroname">${heroName}</div>
+    <div class="message-text"><strong>Dice Pool Updated: [${dicePoolText}]</strong></div>
+  `;
+  messages.appendChild(messageEl);
+  messages.scrollTop = messages.scrollHeight;
+})
 
 socket.on('dice_pool_reset', (data) => {
   const { heroName } = data;
@@ -247,6 +285,40 @@ forcedRoll = () => {
 
 resetDicePool = () => {
   socket.emit('reset_dice_pool');
+}
+
+replaceForRedDie = () => {
+  socket.emit('replace:red');
+}
+
+addRedDie = () => {
+  socket.emit('add:red');
+}
+
+replaceForBlackDie = () => {
+  socket.emit('replace:black');
+}
+
+addBlackDie = () => {
+  socket.emit('add:black');
+}
+
+spendHope = () => {
+  hopeSpent = prompt("How much Hope are you spending? (Enter a number)");
+  if (!hopeSpent || isNaN(hopeSpent) || parseInt(hopeSpent) < 0) {
+    showError('Please enter a valid number for Hope');
+    return;
+  }
+  socket.emit('spend:hope', parseInt(hopeSpent));
+}
+
+spendDread = () => {
+    hopeSpent = prompt("How much Hope are you spending? (Enter a number)");
+  if (!hopeSpent || isNaN(hopeSpent) || parseInt(hopeSpent) < 0) {
+    showError('Please enter a valid number for Dread');
+    return;
+  }
+  socket.emit('spend:dread', parseInt(hopeSpent));
 }
 
 function escapeHtml(text) {

@@ -157,7 +157,8 @@ io.on('connection', (socket) => {
 
     const rollResults = hero.actionRoll();
     const text = ` ${rollResults.heroDiceResults.join(' ')} ${rollResults.redDiceResults.join(' ')} ${rollResults.blackDiceResults.join(' ')}</br>Suns: ${rollResults.suns}</br>Skulls: ${rollResults.skulls}`;
-    io.to(user.room).emit('action_roll_result', { text, heroName: hero.name });
+    io.to(user.room).emit('action_roll_result', { text, hero });
+    io.to(socket.id).emit('show:hope', { hero }); // Update Hope just for player rolling
   });
 
   socket.on('forced_roll', () => {
@@ -177,8 +178,72 @@ io.on('connection', (socket) => {
         </br><em>Suns:</em> ${rollResults.suns}
         </br><em>Skulls:</em> ${rollResults.skulls}
         </br> <strong><label style="color: ${rollResults.success ? 'green;">SUCCESS' : 'red;">FAILURE'}</label></strong>`;
-    io.to(user.room).emit('action_roll_result', { text, heroName: hero.name });
+    io.to(user.room).emit('action_roll_result', { text, hero });
   });
+
+  socket.on('replace:red', () => {
+    const user = users.get(socket.id);
+    const hero = socket.hero;
+    if (!user || !user.room) {
+      socket.emit('error', 'Not in a room');
+      return;
+    }
+    if (!hero) {
+        socket.emit('error', 'It is the players who replace dice, not the EM!');
+        return;
+    }
+
+    const dicePool = hero.replaceForRedDie();
+    io.to(user.room).emit('dice_pool_updated', { heroName: hero.name, dicePool });
+  });
+
+  socket.on('add:red', () => {
+    const user = users.get(socket.id);
+    const hero = socket.hero;
+    if (!user || !user.room) {
+      socket.emit('error', 'Not in a room');
+      return;
+    }
+    if (!hero) {
+        socket.emit('error', 'It is the players who replace dice, not the EM!');
+        return;
+    }
+
+    const dicePool = hero.addRedDie();
+    io.to(user.room).emit('dice_pool_updated', { heroName: hero.name, dicePool });
+  });
+
+  socket.on('replace:black', () => {
+    const user = users.get(socket.id);
+    const hero = socket.hero;
+    if (!user || !user.room) {
+      socket.emit('error', 'Not in a room');
+      return;
+    }
+    if (!hero) {
+        socket.emit('error', 'It is the players who replace dice, not the EM!');
+        return;
+    }
+
+    const dicePool = hero.replaceForBlackDie();
+    io.to(user.room).emit('dice_pool_updated', { heroName: hero.name, dicePool });
+  });
+
+    socket.on('add:black', () => {
+      const user = users.get(socket.id);
+      const hero = socket.hero;
+      if (!user || !user.room) {
+        socket.emit('error', 'Not in a room');
+        return;
+      }
+      if (!hero) {
+          socket.emit('error', 'It is the players who replace dice, not the EM!');
+          return;
+      }
+
+      const dicePool = hero.addBlackDie();
+      io.to(user.room).emit('dice_pool_updated', { heroName: hero.name, dicePool });
+    });
 
     socket.on('reset_dice_pool', () => {
         const user = users.get(socket.id);
@@ -191,9 +256,50 @@ io.on('connection', (socket) => {
             socket.emit('error', 'EMs don\'t make forced rolls!');
             return;
         }
-        hero.resetDicePool();
-        socket.emit('dice_pool_reset', { heroName: hero.name });
+        const dicePool = hero.resetDicePool();
+        io.to(user.room).emit('dice_pool_reset', { heroName: hero.name, dicePool });
     });
+
+  socket.on('spend:hope', (hopeSpent) => {
+    const user = users.get(socket.id);
+    const hero = socket.hero;
+    if (!user || !user.room) {
+      socket.emit('error', 'Not in a room');
+      return;
+    }
+    if (!hero) {
+        socket.emit('error', 'It is the players who spend Hope, not the EM!');
+        return;
+    }
+
+    if (hero.hope < hopeSpent) {
+      socket.emit('error', 'Not enough Hope to spend');
+      return;
+    }
+
+    hero.spendHope(hopeSpent);
+    io.to(socket.id).emit('spend:hope', { hero });
+  });
+
+  // socket.on('spend:dread', (dreadSpent) => {
+  //   const user = users.get(socket.id);
+  //   const hero = socket.hero;
+  //   if (!user || !user.room) {
+  //     socket.emit('error', 'Not in a room');
+  //     return;
+  //   }
+  //   if (!hero) {
+  //       socket.emit('error', 'It is the players who spend Dread, not the EM!');
+  //       return;
+  //   }
+
+  //   if (hero.dread < dreadSpent) {
+  //     socket.emit('error', 'Not enough Dread to spend');
+  //     return;
+  //   }
+
+  //   hero.spendDread(dreadSpent);
+  // });
 
   // Send message to room
   socket.on('send_message', (message) => {

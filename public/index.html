@@ -60,8 +60,8 @@
             </div>
           </div>
 
-          <div id="hope-tracker">
-            <h3>Hope:</h3>
+          <div id="hope-tracker-section">
+            <h3 id="hopeTracker"></h3>
           </div>
 
           <div class="chat-area">
@@ -70,10 +70,22 @@
               <input type="text" id="messageInput" placeholder="Type a message..." />
               <button onclick="sendMessage()">Send</button>
             </div>
-            <div>
-                <button onClick="actionRoll()">Action Roll!</button>
-                <button onClick="forcedRoll()">Forced Roll!</button>
-                <button onClick="resetDicePool()">Reset Dice Pool</button>
+            <div class="game-actions">
+                <div>
+                  <button onclick="actionRoll()">Action Roll!</button>
+                  <button onclick="forcedRoll()">Forced Roll!</button>
+                  <button onclick="resetDicePool()">Reset Dice Pool</button>
+                </div>
+                <div>
+                  <button onclick="replaceForRedDie()" class="orange-btn">🟨 ▶ 🟥 </button>
+                  <button onclick="replaceForBlackDie()" class="orange-btn">🟨 ▶ ⬛ </button>
+                  <button onclick="addRedDie()" class="orange-btn">+🟥 </button>
+                  <button onclick="addBlackDie()" class="orange-btn">+⬛</button>
+                </div>
+                <div>
+                  <button onclick="spendHope()">Spend Hope</button>
+                  <button onclick="spendDread()">Spend Dread</button>
+                </div>
             </div>
           </div>
         </div>
