@@ -2,6 +2,27 @@ function getRandomInt() {
     return Math.floor(Math.random() * 6) + 1;
 }
 
+class Game {
+    constructor(roomId, em) {
+        this.roomId = roomId;
+        this.em = em;
+        this.heroes = [];
+        this.dread = 0;
+    }
+
+    addHero(hero) {
+        this.heroes.push(hero);
+    }
+
+    spendDread = (amount) => {
+        if (amount > this.dread) {
+            throw new Error('Not enough Dread to spend');
+        }
+        this.dread -= amount;
+        return this.dread;
+    }
+}
+
 class Hero {
     constructor({ name, archetypeId, heroPathId }) {
         this.name = name;
@@ -100,7 +121,9 @@ class Hero {
     // Perform an Action Roll, adding one Hero Die to the pool
     actionRoll = () => {
         this.dicePool.hero++;
-        return this.rollDice();
+        const diceResults = this.rollDice();
+        this.hope += diceResults.suns;
+        return diceResults;
     }
 
     resetDicePool = () => {
@@ -109,8 +132,42 @@ class Hero {
             red: 0,
             black: 0,
         };
-    }   
+    }
+    
+    replaceForRedDie = () => {
+        if (this.dicePool.hero > 0) {
+            this.dicePool.hero--;
+            this.dicePool.red++;
+        }
+        return this.dicePool;
+    }
+
+    replaceForBlackDie = () => {
+        if (this.dicePool.hero > 0) {
+            this.dicePool.hero--;
+            this.dicePool.black++;
+        }
+        return this.dicePool;
+    }
+
+    addRedDie = () => {
+        this.dicePool.red++;
+        return this.dicePool;
+    }
+
+    addBlackDie = () => {
+        this.dicePool.black++;
+        return this.dicePool;
+    }
+
+    spendHope = (amount) => {
+        if (amount > this.hope) {
+            throw new Error('Not enough Hope to spend');
+        }
+        this.hope -= amount;
+        return this.hope;
+    }
 
 }
 
-export { Hero };
+export { Hero, Game };
