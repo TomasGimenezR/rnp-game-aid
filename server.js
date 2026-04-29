@@ -14,7 +14,9 @@ const io = new Server(httpServer, {
   cors: {
     origin: "*",
     methods: ["GET", "POST"]
-  }
+  },
+  pingInterval: 25000,
+  pingTimeout: 1200000, // 20 minutes
 });
 
 const PORT = 3000;
@@ -304,7 +306,7 @@ io.on('connection', (socket) => {
   // Send message to room
   socket.on('send_message', (message) => {
     const user = users.get(socket.id);
-    const heroName = socket.hero?.name || user?.username || 'Unknown Hero';
+    const heroName = user?.username || socket.hero?.name || 'Unknown Hero';
     if (!user || !user.room) {
       socket.emit('error', 'Not in a room');
       return;
