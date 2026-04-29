@@ -14,7 +14,9 @@ const io = new Server(httpServer, {
   cors: {
     origin: "*",
     methods: ["GET", "POST"]
-  }
+  },
+  pingInterval: 25000,
+  pingTimeout: 1200000, // 20 minutes
 });
 
 const PORT = 3000;
