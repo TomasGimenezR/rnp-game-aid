@@ -215,6 +215,22 @@ io.on('connection', (socket) => {
     io.to(user.room).emit('dice_pool_updated', { heroName: hero.name, dicePool });
   });
 
+  socket.on('subtract:red', () => {
+    const user = users.get(socket.id);
+    const hero = socket.hero;
+    if (!user || !user.room) {
+      socket.emit('error', 'Not in a room');
+      return;
+    }
+    if (!hero) {
+        socket.emit('error', 'It is the players who replace dice, not the EM!');
+        return;
+    }
+
+    const dicePool = hero.subtractRedDie();
+    io.to(user.room).emit('dice_pool_updated', { heroName: hero.name, dicePool });
+  });
+
   socket.on('replace:black', () => {
     const user = users.get(socket.id);
     const hero = socket.hero;
@@ -247,6 +263,38 @@ io.on('connection', (socket) => {
       io.to(user.room).emit('dice_pool_updated', { heroName: hero.name, dicePool });
     });
 
+    socket.on('subtract:black', () => {
+      const user = users.get(socket.id);
+      const hero = socket.hero;
+      if (!user || !user.room) {
+        socket.emit('error', 'Not in a room');
+        return;
+      }
+      if (!hero) {
+          socket.emit('error', 'It is the players who replace dice, not the EM!');
+          return;
+      }
+
+      const dicePool = hero.subtractBlackDie();
+      io.to(user.room).emit('dice_pool_updated', { heroName: hero.name, dicePool });
+    });
+
+    socket.on('set:dice', (dicePool) => {
+        const user = users.get(socket.id);
+        const hero = socket.hero;
+        if (!user || !user.room) {
+            socket.emit('error', 'Not in a room');
+            return;
+        }
+        if (!hero) {
+            socket.emit('error', 'It is the players who set their dice pools, not the EM!');
+            return;
+        }
+        hero.setDicePool(dicePool);
+        io.to(user.room).emit('dice_pool_updated', { heroName: hero.name, dicePool });
+        io.to(socket.id).emit('show:hope', { hero });
+    });
+
     socket.on('reset_dice_pool', () => {
         const user = users.get(socket.id);
         const hero = socket.hero;
@@ -258,9 +306,33 @@ io.on('connection', (socket) => {
             socket.emit('error', 'EMs don\'t make forced rolls!');
             return;
         }
-        const dicePool = hero.resetDicePool();
+        const dicePool = hero.setDicePool({ hero: 0, red: 0, black: 0 });
         io.to(user.room).emit('dice_pool_reset', { heroName: hero.name, dicePool });
     });
+
+  socket.on('set:hope', (hope) => {
+    const user = users.get(socket.id);
+    const hero = socket.hero;
+    if (!user || !user.room) {
+      socket.emit('error', 'Not in a room');
+      return;
+    }
+    if (!hero) {
+        socket.emit('error', 'It is the players who set their Hope, not the EM!');
+        return;
+    }
+    if (hope === "+1")
+      hero.setHope(hero.hope + 1);
+    else {
+      hope = parseInt(hope);
+      if (isNaN(hope) || hope < 0) {
+        socket.emit('error', 'Invalid Hope value');
+        return;
+      }
+      hero.setHope(hope);
+    }
+    io.to(socket.id).emit('update:hero', { hero });
+  });
 
   socket.on('spend:hope', (hopeSpent) => {
     const user = users.get(socket.id);
