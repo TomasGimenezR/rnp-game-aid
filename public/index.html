@@ -67,7 +67,7 @@
           <div class="chat-area">
             <div class="messages" id="messages"></div>
             <div class="message-input">
-              <input type="text" id="messageInput" placeholder="Type a message..." />
+              <input typetext" id="messageInput" placeholder="Type a message..." />
               <button onclick="sendMessage()">Send</button>
             </div>
             <div class="game-actions">
@@ -81,10 +81,15 @@
                   <button onclick="replaceForBlackDie()" class="orange-btn">🟨 ▶ ⬛ </button>
                   <button onclick="addRedDie()" class="orange-btn">+🟥 </button>
                   <button onclick="addBlackDie()" class="orange-btn">+⬛</button>
+                  <button onclick="subtractRedDie()" class="orange-btn">-🟥 </button>
+                  <button onclick="subtractBlackDie()" class="orange-btn">-⬛</button>
+                  <button onclick="setDice()" class="orange-btn">{🟨🟥⬛}</button>
                 </div>
                 <div>
                   <button onclick="spendHope()">Spend Hope</button>
-                  <button onclick="spendDread()">Spend Dread</button>
+                  <button onclick="addOneHope()">+1 Hope</button>
+                  <button onclick="setHope()">Set Hope</button>
+                  <!-- <button onclick="spendDread()">Spend Dread</button> -->
                 </div>
             </div>
           </div>
@@ -93,6 +98,34 @@
         <div id="noRoom" class="no-room">
           Select or create a room to start chatting
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dice Pool Modal -->
+  <div id="diceModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Set Dice Pool</h2>
+        <button class="modal-close" onclick="closeDiceModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="dice-input-group">
+          <label for="heroInput">🟨 Hero Dice:</label>
+          <input type="number" id="heroInput" min="0" max="20" value="0">
+        </div>
+        <div class="dice-input-group">
+          <label for="redInput">🟥 Red Dice:</label>
+          <input type="number" id="redInput" min="0" max="20" value="0">
+        </div>
+        <div class="dice-input-group">
+          <label for="blackInput">⬛ Black Dice:</label>
+          <input type="number" id="blackInput" min="0" max="20" value="0">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn-cancel" onclick="closeDiceModal()">Cancel</button>
+        <button class="modal-btn-submit" onclick="submitDicePool()">Set Dice Pool</button>
       </div>
     </div>
   </div>

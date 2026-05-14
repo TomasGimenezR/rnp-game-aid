@@ -109,6 +109,12 @@ socket.on('show:hope', (data) => {
   console.log('The updated hero is ', hero);
 });
 
+socket.on('update:hero', (data) => {
+  const { hero } = data;
+  hopeTracker.innerHTML = `<p>Hope: ${hero.hope}</p>`;
+  
+});
+
 socket.on('spend:hope', (data) => {
   const { hero } = data;
   hopeTracker.innerHTML = `<p>Hope: ${hero.hope}</p>`;
@@ -295,12 +301,33 @@ addRedDie = () => {
   socket.emit('add:red');
 }
 
+subtractRedDie = () => {
+  socket.emit('subtract:red');
+}
+
 replaceForBlackDie = () => {
   socket.emit('replace:black');
 }
 
 addBlackDie = () => {
   socket.emit('add:black');
+}
+
+subtractBlackDie = () => {
+  socket.emit('subtract:black');
+}
+
+addOneHope = () => {
+  socket.emit('set:hope', "+1");
+}
+
+setHope = () => {
+  hopeValue = prompt("Set Hope to what value? (Enter a number)");
+  if (!hopeValue || isNaN(hopeValue) || parseInt(hopeValue) < 0) {
+    showError('Please enter a valid number for Hope');
+    return;
+  }
+  socket.emit('set:hope', parseInt(hopeValue));
 }
 
 spendHope = () => {
@@ -338,4 +365,39 @@ roomNameInput.addEventListener('keypress', (e) => {
 
 messageInput.addEventListener('keypress', (e) => {
   if (e.key === 'Enter') sendMessage();
+});
+
+setDice = () => {
+  const modal = document.getElementById('diceModal');
+  modal.classList.add('show');
+  document.getElementById('heroInput').focus();
+}
+
+closeDiceModal = () => {
+  const modal = document.getElementById('diceModal');
+  modal.classList.remove('show');
+}
+
+submitDicePool = () => {
+  const hero = parseInt(document.getElementById('heroInput').value) || 0;
+  const red = parseInt(document.getElementById('redInput').value) || 0;
+  const black = parseInt(document.getElementById('blackInput').value) || 0;
+
+  if (hero < 0 || red < 0 || black < 0) {
+    showError('Dice counts cannot be negative');
+    return;
+  }
+
+  socket.emit('set:dice', { hero, red, black });
+  closeDiceModal();
+  document.getElementById('heroInput').value = '0';
+  document.getElementById('redInput').value = '0';
+  document.getElementById('blackInput').value = '0';
+}
+
+// Close modal when pressing Escape
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeDiceModal();
+  }
 });

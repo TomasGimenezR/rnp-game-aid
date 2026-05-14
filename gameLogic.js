@@ -126,12 +126,8 @@ class Hero {
         return diceResults;
     }
 
-    resetDicePool = () => {
-        this.dicePool = {
-            hero: 0,
-            red: 0,
-            black: 0,
-        };
+    setDicePool = (dicePool) => {
+        this.dicePool = dicePool;
     }
     
     replaceForRedDie = () => {
@@ -155,9 +151,31 @@ class Hero {
         return this.dicePool;
     }
 
+    subtractRedDie = () => {
+        if (this.dicePool.red > 0) {
+            this.dicePool.red--;
+        }
+        return this.dicePool;
+    }
+
     addBlackDie = () => {
         this.dicePool.black++;
         return this.dicePool;
+    }
+
+    subtractBlackDie = () => {
+        if (this.dicePool.black > 0) {
+            this.dicePool.black--;
+        }
+        return this.dicePool;
+    }
+
+    setHope = (amount) => {
+        if (amount < 0) {
+            throw new Error('Hope cannot be negative');
+        }
+        this.hope = amount;
+        return this.hope;
     }
 
     spendHope = (amount) => {
