@@ -26,7 +26,7 @@ app.use(express.static(join(__dirname, 'public')));
 
 // Store connected users and rooms
 const users = new Map(); // userId -> { username, socketId, room }
-const rooms = new Map(); // roomId -> { name, creator, members: Set }
+const rooms = new Map(); // roomId -> { name, creator, members: Set, gameMode: 'combat'|'downtime' }
 
 // Socket.io connection handling
 io.on('connection', (socket) => {
@@ -71,7 +71,8 @@ io.on('connection', (socket) => {
       name: roomName,
       creator: user.username,
       members: new Set([socket.id]),
-      createdAt: new Date()
+      createdAt: new Date(),
+      gameMode: 'Combat'
     };
 
     rooms.set(roomId, room);
@@ -121,13 +122,14 @@ io.on('connection', (socket) => {
     user.room = roomId;
     room.members.add(socket.id);
     socket.join(roomId);
-    
+
     // Create Hero
     const hero = new Hero({ name: heroName, archetypeId: heroArchetypeId, heroPathId: heroPathId });
     socket.hero = hero; // Store hero object for later use
-    
+
     const memberNames = Array.from(room.members).map(memberId => users.get(memberId)?.username);
     socket.emit('room_joined', { roomId, roomName: room.name, hero, members: memberNames });
+    socket.emit('game_mode_changed', { mode: room.gameMode });
     io.to(roomId).emit('room_members_updated', { roomId, members: memberNames });
 
     console.log(`${user.username} joined room: ${room.name}`);
@@ -416,6 +418,23 @@ io.on('connection', (socket) => {
 
     socket.leave(user.room);
     user.room = null;
+  });
+
+  socket.on('change_game_mode', (data) => {
+    const user = users.get(socket.id);
+    if (!user || !user.room) {
+      socket.emit('error', 'Not in a room');
+      return;
+    }
+
+    const room = rooms.get(user.room);
+    if (!room) {
+      socket.emit('error', 'Room not found');
+      return;
+    }
+
+    room.gameMode = data.mode;
+    io.to(user.room).emit('game_mode_changed', { mode: data.mode });
   });
 
   // Disconnect event

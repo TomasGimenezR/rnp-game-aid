@@ -1,23 +1,24 @@
 const socket = io();
 let currentUser = null;
 let currentRoom = null;
+let pendingRoomJoin = null;
+let currentGameMode = 'combat';
 
 // DOM Elements
+const loginPage = document.getElementById('loginPage');
+const roomsPage = document.getElementById('roomsPage');
+const roomPage = document.getElementById('roomPage');
 const statusEl = document.getElementById('status');
 const errorEl = document.getElementById('error');
 const successEl = document.getElementById('success');
-const loginSection = document.getElementById('loginSection');
-const mainContent = document.getElementById('mainContent');
 const usernameInput = document.getElementById('usernameInput');
 const roomNameInput = document.getElementById('roomNameInput');
+const heroNameInput = document.getElementById('heroNameInput');
 const roomsList = document.getElementById('roomsList');
 const messageInput = document.getElementById('messageInput');
 const messages = document.getElementById('messages');
 const hopeTracker = document.getElementById('hopeTracker');
-const currentRoomEl = document.getElementById('currentRoom');
-const noRoomEl = document.getElementById('noRoom');
 const currentRoomName = document.getElementById('currentRoomName');
-const membersList = document.getElementById('membersList');
 
 // Socket event listeners
 socket.on('connect', () => {
@@ -27,16 +28,15 @@ socket.on('connect', () => {
 socket.on('disconnect', () => {
   updateStatus('Disconnected', false);
   currentUser = null;
-  loginSection.style.display = 'block';
-  mainContent.classList.remove('active');
+  currentRoom = null;
+  showPage('loginPage');
 });
 
 socket.on('login_success', (data) => {
   currentUser = data;
-  loginSection.style.display = 'none';
-  mainContent.classList.add('active');
   showSuccess(`Welcome, ${data.username}!`);
   getRooms();
+  showPage('roomsPage');
   usernameInput.value = '';
 });
 
@@ -47,21 +47,23 @@ socket.on('login_error', (error) => {
 socket.on('room_created', (data) => {
   currentRoom = { roomId: data.roomId, name: data.roomName, members: data.members };
   showSuccess(`Room "${data.roomName}" created!`);
-  updateChatUI();
+  closeCreateRoomModal();
   getRooms();
 });
 
 socket.on('room_joined', (data) => {
   currentRoom = { roomId: data.roomId, name: data.roomName, members: data.members };
+  hopeTracker.textContent = data.hero.hope;
   showSuccess(`Joined room "${data.roomName}"`);
-  updateChatUI();
+  closeHeroNameModal();
+  showPage('roomPage');
   messages.innerHTML = '';
+  updateRoomHeader();
 });
 
 socket.on('room_members_updated', (data) => {
   if (currentRoom && currentRoom.roomId === data.roomId) {
     currentRoom.members = data.members;
-    membersList.innerHTML = data.members.join(', ');
   }
 });
 
@@ -79,7 +81,7 @@ socket.on('new_message', (data) => {
     messageEl.className = 'message';
     const time = new Date(data.timestamp).toLocaleTimeString();
     messageEl.innerHTML = `
-      <div class="message-heroname">${data.username}</div>
+      <div class="message-heroname">${escapeHtml(data.username)}</div>
       <div class="message-text">${escapeHtml(data.message)}</div>
       <div class="message-time">${time}</div>
     `;
@@ -91,12 +93,12 @@ socket.on('new_message', (data) => {
 socket.on('action_roll_result', (data) => {
   const { text } = data;
   let { hero } = data;
-  if(hero == null)
-    hero = { name: 'Unknown Hero' }; // Fallback in case hero data is missing
+  if (hero == null)
+    hero = { name: 'Unknown Hero' };
   const messageEl = document.createElement('div');
-  messageEl.className = 'message action-roll-result';
+  messageEl.className = 'message';
   messageEl.innerHTML = `
-    <div class="message-heroname">${hero.name}</div>
+    <div class="message-heroname">${escapeHtml(hero.name)}</div>
     <div class="message-text"><strong>Action Roll Results:</strong> ${text}</div>
   `;
   messages.appendChild(messageEl);
@@ -105,24 +107,21 @@ socket.on('action_roll_result', (data) => {
 
 socket.on('show:hope', (data) => {
   const { hero } = data;
-  hopeTracker.innerHTML = `<p>Hope: ${hero.hope}</p>`;
-  console.log('The updated hero is ', hero);
+  hopeTracker.textContent = hero.hope;
 });
 
 socket.on('update:hero', (data) => {
   const { hero } = data;
-  hopeTracker.innerHTML = `<p>Hope: ${hero.hope}</p>`;
-  
+  hopeTracker.textContent = hero.hope;
 });
 
 socket.on('spend:hope', (data) => {
   const { hero } = data;
-  hopeTracker.innerHTML = `<p>Hope: ${hero.hope}</p>`;
-  console.log('The updated hero is ', hero);
+  hopeTracker.textContent = hero.hope;
   const messageEl = document.createElement('div');
-  messageEl.className = 'message action-roll-result';
+  messageEl.className = 'message';
   messageEl.innerHTML = `
-    <div class="message-heroname">${hero.name}</div>
+    <div class="message-heroname">${escapeHtml(hero.name)}</div>
     <div class="message-text"><strong>Spent Hope!</strong></div>
   `;
   messages.appendChild(messageEl);
@@ -131,35 +130,45 @@ socket.on('spend:hope', (data) => {
 
 socket.on('dice_pool_updated', (data) => {
   const { heroName, dicePool } = data;
-  console.log('Dicepool', dicePool)
-  dicePoolText = "</br>" + "🟨 ".repeat(dicePool.hero) + "🟥 ".repeat(dicePool.red) + "⬛ ".repeat(dicePool.black);
+  const dicePoolText = "🟨 ".repeat(dicePool.hero) + "🟥 ".repeat(dicePool.red) + "⬛ ".repeat(dicePool.black);
   const messageEl = document.createElement('div');
-  messageEl.className = 'message action-roll-result';
+  messageEl.className = 'message';
   messageEl.innerHTML = `
-    <div class="message-heroname">${heroName}</div>
-    <div class="message-text"><strong>Dice Pool Updated: [${dicePoolText}]</strong></div>
+    <div class="message-heroname">${escapeHtml(heroName)}</div>
+    <div class="message-text"><strong>Dice Pool Updated:</strong> ${dicePoolText || '(empty)'}</div>
   `;
   messages.appendChild(messageEl);
   messages.scrollTop = messages.scrollHeight;
-})
+});
 
 socket.on('dice_pool_reset', (data) => {
   const { heroName } = data;
   const messageEl = document.createElement('div');
-  messageEl.className = 'message action-roll-result';
+  messageEl.className = 'message';
   messageEl.innerHTML = `
-    <div class="message-heroname">${heroName}</div>
+    <div class="message-heroname">${escapeHtml(heroName)}</div>
     <div class="message-text"><strong>Dice Pool Reset!</strong></div>
   `;
   messages.appendChild(messageEl);
   messages.scrollTop = messages.scrollHeight;
-})
+});
 
 socket.on('error', (error) => {
   showError(error);
 });
 
+socket.on('game_mode_changed', (data) => {
+  const { mode } = data;
+  updateGameMode(mode);
+});
+
 // Functions
+function showPage(pageName) {
+  loginPage.style.display = pageName === 'loginPage' ? 'flex' : 'none';
+  roomsPage.style.display = pageName === 'roomsPage' ? 'flex' : 'none';
+  roomPage.style.display = pageName === 'roomPage' ? 'flex' : 'none';
+}
+
 function login() {
   const username = usernameInput.value.trim();
   if (!username) {
@@ -167,6 +176,16 @@ function login() {
     return;
   }
   socket.emit('login', username);
+}
+
+function openCreateRoomModal() {
+  document.getElementById('createRoomModal').classList.add('show');
+  document.getElementById('roomNameInput').focus();
+}
+
+function closeCreateRoomModal() {
+  document.getElementById('createRoomModal').classList.remove('show');
+  document.getElementById('roomNameInput').value = '';
 }
 
 function createRoom() {
@@ -188,31 +207,72 @@ function joinRoom(roomId) {
     showError('Please login first');
     return;
   }
-  let heroName = prompt("Enter your hero's name:");
-  if (!heroName || heroName == "") {
+  pendingRoomJoin = roomId;
+  document.getElementById('heroNameModal').classList.add('show');
+  heroNameInput.focus();
+}
+
+function confirmHeroName() {
+  const heroName = heroNameInput.value.trim();
+  if (!heroName) {
     showError('Hero name cannot be empty');
     return;
   }
-  let heroArchetypeId = 1; // prompt("Enter your hero's archetype ID (number):");
-  // if (!heroArchetypeId || isNaN(heroArchetypeId)) {
-  //   showError('Hero archetype ID must be a number');
-  //   return;
-  // }
-  let heroPathId = 1; //prompt("Enter your hero's path ID (number):");
-  // if (!heroPathId || isNaN(heroPathId)) {
-  //   showError('Hero path ID must be a number');
-  //   return;
-  // }
-  data = { roomId, heroName: heroName.trim(), heroArchetypeId: parseInt(heroArchetypeId), heroPathId: parseInt(heroPathId) };
-  socket.emit('join_room', data );
+  if (!pendingRoomJoin) {
+    showError('Error: No room selected');
+    return;
+  }
+
+  const data = {
+    roomId: pendingRoomJoin,
+    heroName: heroName,
+    heroArchetypeId: 1,
+    heroPathId: 1
+  };
+  socket.emit('join_room', data);
+  heroNameInput.value = '';
+}
+
+function cancelJoinRoom() {
+  closeHeroNameModal();
+  pendingRoomJoin = null;
+}
+
+function closeHeroNameModal() {
+  document.getElementById('heroNameModal').classList.remove('show');
+  heroNameInput.value = '';
+}
+
+function confirmLeaveRoom() {
+  document.getElementById('leaveConfirmModal').classList.add('show');
+}
+
+function closeLeaveConfirmModal() {
+  document.getElementById('leaveConfirmModal').classList.remove('show');
 }
 
 function leaveRoom() {
   if (!currentRoom) return;
+  closeLeaveConfirmModal();
   socket.emit('leave_room');
   currentRoom = null;
-  updateChatUI();
   getRooms();
+  showPage('roomsPage');
+}
+
+function toggleGameMode() {
+  const newMode = currentGameMode === 'combat' ? 'downtime' : 'combat';
+  socket.emit('change_game_mode', { mode: newMode });
+}
+
+function updateGameMode(mode) {
+  currentGameMode = mode;
+  const modeDisplay = document.getElementById('gameModeDisplay');
+  modeDisplay.textContent = mode.charAt(0).toUpperCase() + mode.slice(1);
+  modeDisplay.classList.remove('downtime');
+  if (mode === 'downtime') {
+    modeDisplay.classList.add('downtime');
+  }
 }
 
 function sendMessage() {
@@ -232,31 +292,23 @@ function getRooms() {
 
 function displayRooms(roomsList_data) {
   if (roomsList_data.length === 0) {
-    roomsList.innerHTML = '<p style="color: #999; text-align: center;">No rooms available</p>';
+    roomsList.innerHTML = '<p style="color: #999; text-align: center; grid-column: 1/-1;">No rooms available</p>';
     return;
   }
 
   roomsList.innerHTML = roomsList_data.map(room => `
     <div class="room-item">
-      <div class="room-item-header">
-        <div class="room-item-name">${escapeHtml(room.name)}</div>
-      </div>
+      <div class="room-item-name">${escapeHtml(room.name)}</div>
       <div class="room-item-info">EM: ${escapeHtml(room.creator)}</div>
-      <div class="room-item-members">All players: ${room.memberCount} - ${room.members.join(', ')}</div>
+      <div class="room-item-members">Players (${room.memberCount}): ${room.members.join(', ')}</div>
       <button class="room-item-button" onclick="joinRoom('${room.roomId}')">Join as Player</button>
     </div>
   `).join('');
 }
 
-function updateChatUI() {
+function updateRoomHeader() {
   if (currentRoom) {
     currentRoomName.textContent = currentRoom.name;
-    membersList.innerHTML = currentRoom.members.join(', ');
-    currentRoomEl.style.display = 'block';
-    noRoomEl.style.display = 'none';
-  } else {
-    currentRoomEl.style.display = 'none';
-    noRoomEl.style.display = 'block';
   }
 }
 
@@ -281,48 +333,48 @@ function showSuccess(message) {
   }, 3000);
 }
 
-actionRoll = () => {
+function actionRoll() {
   socket.emit('action_roll');
 }
 
-forcedRoll = () => {
+function forcedRoll() {
   socket.emit('forced_roll');
 }
 
-resetDicePool = () => {
+function resetDicePool() {
   socket.emit('reset_dice_pool');
 }
 
-replaceForRedDie = () => {
+function replaceForRedDie() {
   socket.emit('replace:red');
 }
 
-addRedDie = () => {
+function addRedDie() {
   socket.emit('add:red');
 }
 
-subtractRedDie = () => {
+function subtractRedDie() {
   socket.emit('subtract:red');
 }
 
-replaceForBlackDie = () => {
+function replaceForBlackDie() {
   socket.emit('replace:black');
 }
 
-addBlackDie = () => {
+function addBlackDie() {
   socket.emit('add:black');
 }
 
-subtractBlackDie = () => {
+function subtractBlackDie() {
   socket.emit('subtract:black');
 }
 
-addOneHope = () => {
+function addOneHope() {
   socket.emit('set:hope', "+1");
 }
 
-setHope = () => {
-  hopeValue = prompt("Set Hope to what value? (Enter a number)");
+function setHope() {
+  const hopeValue = prompt("Set Hope to what value? (Enter a number)");
   if (!hopeValue || isNaN(hopeValue) || parseInt(hopeValue) < 0) {
     showError('Please enter a valid number for Hope');
     return;
@@ -330,22 +382,13 @@ setHope = () => {
   socket.emit('set:hope', parseInt(hopeValue));
 }
 
-spendHope = () => {
-  hopeSpent = prompt("How much Hope are you spending? (Enter a number)");
+function spendHope() {
+  const hopeSpent = prompt("How much Hope are you spending? (Enter a number)");
   if (!hopeSpent || isNaN(hopeSpent) || parseInt(hopeSpent) < 0) {
     showError('Please enter a valid number for Hope');
     return;
   }
   socket.emit('spend:hope', parseInt(hopeSpent));
-}
-
-spendDread = () => {
-    hopeSpent = prompt("How much Hope are you spending? (Enter a number)");
-  if (!hopeSpent || isNaN(hopeSpent) || parseInt(hopeSpent) < 0) {
-    showError('Please enter a valid number for Dread');
-    return;
-  }
-  socket.emit('spend:dread', parseInt(hopeSpent));
 }
 
 function escapeHtml(text) {
@@ -363,22 +406,26 @@ roomNameInput.addEventListener('keypress', (e) => {
   if (e.key === 'Enter') createRoom();
 });
 
+heroNameInput.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') confirmHeroName();
+});
+
 messageInput.addEventListener('keypress', (e) => {
   if (e.key === 'Enter') sendMessage();
 });
 
-setDice = () => {
+function setDice() {
   const modal = document.getElementById('diceModal');
   modal.classList.add('show');
   document.getElementById('heroInput').focus();
 }
 
-closeDiceModal = () => {
+function closeDiceModal() {
   const modal = document.getElementById('diceModal');
   modal.classList.remove('show');
 }
 
-submitDicePool = () => {
+function submitDicePool() {
   const hero = parseInt(document.getElementById('heroInput').value) || 0;
   const red = parseInt(document.getElementById('redInput').value) || 0;
   const black = parseInt(document.getElementById('blackInput').value) || 0;
@@ -395,9 +442,14 @@ submitDicePool = () => {
   document.getElementById('blackInput').value = '0';
 }
 
-// Close modal when pressing Escape
+// Close modals when pressing Escape
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     closeDiceModal();
+    closeCreateRoomModal();
+    closeHeroNameModal();
   }
 });
+
+// Initialize
+showPage('loginPage');

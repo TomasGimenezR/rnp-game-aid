@@ -9,95 +9,153 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <img id="rnp-logo" src="imgs/rnp_logo.png" alt="R&P Logo">
-      <h1>Virtual Game Aid</h1>
-      <div class="status" id="status">Not connected</div>
-    </div>
-
+  <div class="alerts">
     <div class="error" id="error"></div>
     <div class="success" id="success"></div>
+  </div>
 
-    <div class="login-section" id="loginSection">
-      <h2>Login</h2>
-      <div class="input-group">
-        <input type="text" id="usernameInput" placeholder="Enter your username" />
-        <button onclick="login()">Login</button>
+  <!-- Login Page -->
+  <div class="page" id="loginPage">
+    <div class="container login-container">
+      <div class="header">
+        <img id="rnp-logo" src="imgs/rnp_logo.png" alt="R&P Logo">
+        <h1>Virtual Game Aid</h1>
+        <div class="status" id="status">Not connected</div>
+      </div>
+      <div class="login-section">
+        <h2>Login</h2>
+        <div class="input-group">
+          <input type="text" id="usernameInput" placeholder="Enter your username" />
+          <button onclick="login()">Login</button>
+        </div>
       </div>
     </div>
+  </div>
 
-    <div class="main-content" id="mainContent">
-      <!-- Rooms Section -->
-      <div class="section">
-        <h2>Rooms</h2>
+  <!-- Room Selection Page -->
+  <div class="page" id="roomsPage" style="display: none;">
+    <div class="container rooms-container">
+      <div class="header">
+        <img id="rnp-logo" src="imgs/rnp_logo.png" alt="R&P Logo">
+        <h1>Virtual Game Aid</h1>
+        <div class="status" id="statusRooms" style="display: none;">Connected</div>
+      </div>
 
-        <h3>Start New Game as EM</h3>
-        <div class="create-room">
-          <input type="text" id="roomNameInput" placeholder="Enter room name" />
-          <button onclick="createRoom()">Create</button>
-        </div>
-
-        <h3>Available Rooms</h3>
-        <div class="rooms-list" id="roomsList">
+      <div class="rooms-section">
+        <h2>Available Rooms</h2>
+        <button class="create-room-btn" onclick="openCreateRoomModal()">+ Create New Room</button>
+        <div class="rooms-grid" id="roomsList">
           <p style="color: #999; text-align: center;">No rooms available</p>
         </div>
       </div>
+    </div>
+  </div>
 
-      <!-- Chat Section -->
-      <div class="section">
-        <h2>Chat</h2>
-
-        <div id="currentRoom" style="display: none;">
-          <div class="current-room">
-            <div class="current-room-header">
-              <div class="current-room-name" id="currentRoomName"></div>
-              <button class="leave-button" onclick="leaveRoom()">Leave</button>
-            </div>
-            <div class="room-members">
-              <div class="room-members-label">Members:</div>
-              <div class="room-members-list" id="membersList"></div>
-            </div>
+  <!-- Room Page -->
+  <div class="page" id="roomPage" style="display: none;">
+    <div class="room-container">
+  <div class="room-header">
+        <button class="leave-button" onclick="confirmLeaveRoom()">← Leave Room</button>
+        <div class="room-header-center">
+          <h1 id="currentRoomName" class="room-title"></h1>
+          <div class="game-mode-indicator" id="gameModeIndicator">
+            <span class="mode-label">Mode:</span>
+            <span class="mode-value" id="gameModeDisplay">Combat</span>
           </div>
+        </div>
+        <button class="mode-toggle-btn" id="modeToggleBtn" onclick="toggleGameMode()">Toggle Mode</button>
+      </div>
 
-          <div id="hope-tracker-section">
-            <h3 id="hopeTracker"></h3>
-          </div>
+      <div class="hope-tracker-bar">
+        <span class="hope-label">Hope:</span>
+        <span class="hope-value" id="hopeTracker">0</span>
+      </div>
 
-          <div class="chat-area">
-            <div class="messages" id="messages"></div>
-            <div class="message-input">
-              <input typetext" id="messageInput" placeholder="Type a message..." />
-              <button onclick="sendMessage()">Send</button>
-            </div>
-            <div class="game-actions">
-                <div>
-                  <button onclick="actionRoll()">Action Roll!</button>
-                  <button onclick="forcedRoll()">Forced Roll!</button>
-                  <button onclick="resetDicePool()">Reset Dice Pool</button>
-                </div>
-                <div>
-                  <button onclick="replaceForRedDie()" class="orange-btn">🟨 ▶ 🟥 </button>
-                  <button onclick="replaceForBlackDie()" class="orange-btn">🟨 ▶ ⬛ </button>
-                  <button onclick="addRedDie()" class="orange-btn">+🟥 </button>
-                  <button onclick="addBlackDie()" class="orange-btn">+⬛</button>
-                  <button onclick="subtractRedDie()" class="orange-btn">-🟥 </button>
-                  <button onclick="subtractBlackDie()" class="orange-btn">-⬛</button>
-                  <button onclick="setDice()" class="orange-btn">{🟨🟥⬛}</button>
-                </div>
-                <div>
-                  <button onclick="spendHope()">Spend Hope</button>
-                  <button onclick="addOneHope()">+1 Hope</button>
-                  <button onclick="setHope()">Set Hope</button>
-                  <!-- <button onclick="spendDread()">Spend Dread</button> -->
-                </div>
-            </div>
+      <div class="room-content">
+        <div class="chat-section">
+          <h3>Messages</h3>
+          <div class="messages" id="messages"></div>
+          <div class="message-input">
+            <input type="text" id="messageInput" placeholder="Type a message..." />
+            <button onclick="sendMessage()">Send</button>
           </div>
         </div>
 
-        <div id="noRoom" class="no-room">
-          Select or create a room to start chatting
+        <div class="actions-section">
+          <div class="action-group">
+            <h4>Roll</h4>
+            <button onclick="actionRoll()" class="primary-btn">Action Roll!</button>
+            <button onclick="forcedRoll()" class="primary-btn">Forced Roll!</button>
+            <button onclick="resetDicePool()" class="full-width-btn">Reset Dice Pool</button>
+          </div>
+
+          <div class="action-group">
+            <h4>Dice</h4>
+            <button onclick="replaceForRedDie()" class="accent-btn">🟨 ▶ 🟥</button>
+            <button onclick="replaceForBlackDie()" class="accent-btn">🟨 ▶ ⬛</button>
+            <button onclick="addRedDie()" class="accent-btn">+🟥</button>
+            <button onclick="addBlackDie()" class="accent-btn">+⬛</button>
+            <button onclick="subtractRedDie()" class="accent-btn">-🟥</button>
+            <button onclick="subtractBlackDie()" class="accent-btn">-⬛</button>
+            <button onclick="setDice()" class="accent-btn">Set Dice Pool</button>
+          </div>
+
+          <div class="action-group">
+            <h4>Hope</h4>
+            <button onclick="spendHope()">Spend Hope</button>
+            <button onclick="addOneHope()">+1 Hope</button>
+            <button onclick="setHope()">Set Hope</button>
+          </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Room Modal -->
+  <div id="createRoomModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Create New Room</h2>
+        <button class="modal-close" onclick="closeCreateRoomModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="text" id="roomNameInput" placeholder="Enter room name" class="modal-input" />
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn-cancel" onclick="closeCreateRoomModal()">Cancel</button>
+        <button class="modal-btn-submit" onclick="createRoom()">Create Room</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hero Name Modal -->
+  <div id="heroNameModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Enter Hero Name</h2>
+      </div>
+      <div class="modal-body">
+        <input type="text" id="heroNameInput" placeholder="Enter your hero's name" class="modal-input" />
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn-cancel" onclick="cancelJoinRoom()">Cancel</button>
+        <button class="modal-btn-submit" onclick="confirmHeroName()">Join Room</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leave Confirmation Modal -->
+  <div id="leaveConfirmModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Leave Room?</h2>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to leave this room?</p>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn-cancel" onclick="closeLeaveConfirmModal()">Cancel</button>
+        <button class="modal-btn-submit" onclick="leaveRoom()">Leave Room</button>
       </div>
     </div>
   </div>
