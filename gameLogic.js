@@ -3,11 +3,14 @@ function getRandomInt() {
 }
 
 class Game {
-    constructor(roomId, em) {
-        this.roomId = roomId;
+    constructor(gameId, gameName, em) {
+        this.gameId = gameId;
+        this.name = gameName;
         this.em = em;
         this.heroes = [];
         this.dread = 0;
+        this.createdAt = new Date();
+        this.gameState = 'Downtime';
     }
 
     addHero(hero) {

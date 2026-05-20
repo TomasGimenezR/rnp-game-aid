@@ -229,7 +229,7 @@ function confirmHeroName() {
     heroArchetypeId: 1,
     heroPathId: 1
   };
-  socket.emit('join_room', data);
+  socket.emit('room:join', data);
   heroNameInput.value = '';
 }
 
@@ -287,7 +287,7 @@ function sendMessage() {
 }
 
 function getRooms() {
-  socket.emit('get_rooms');
+  socket.emit('get_games');
 }
 
 function displayRooms(roomsList_data) {
