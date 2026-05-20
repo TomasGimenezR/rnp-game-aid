@@ -3,7 +3,7 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { Hero } from './gameLogic.js';
+import { Hero, Game } from './gameLogic.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -73,12 +73,12 @@ io.on('connection', (socket) => {
 
     socket.join(gameId);
     socket.emit('room_created', { roomId: gameId, gameName, members: [user.username] });
-    io.emit('room_list_updated', Array.from(gameList.values()).map(r => ({
-      gameId: r.gameId,
-      name: r.name,
-      creator: r.creator,
-      memberCount: r.members.size,
-      members: Array.from(r.members).map(memberId => users.get(memberId)?.username)
+    io.emit('room_list_updated', Array.from(gameList.values()).map(game => ({
+      gameId: game.gameId,
+      name: game.name,
+      em: game.em,
+      playerCount: game.heroes.length,
+      players: Array.from(game.heroes).map(userId => users.get(userId)?.username)
     })));
 
     console.log(`🏠 Room created: ${gameName} (${gameId}) by ${user.username}`);
@@ -93,9 +93,9 @@ io.on('connection', (socket) => {
       return;
     }
 
-    const room = gameList.get(roomId);
-    if (!room) {
-      socket.emit('error', 'Room not found');
+    const game = gameList.get(roomId);
+    if (!game) {
+      socket.emit('error', 'Game not found');
       return;
     }
     
@@ -113,19 +113,18 @@ io.on('connection', (socket) => {
     
     // Join new room
     user.room = roomId;
-    room.members.add(socket.id);
+    game.heroes.push(user);
     socket.join(roomId);
 
     // Create Hero
     const hero = new Hero({ name: heroName, archetypeId: heroArchetypeId, heroPathId: heroPathId });
     socket.hero = hero; // Store hero object for later use
 
-    const memberNames = Array.from(room.members).map(memberId => users.get(memberId)?.username);
-    socket.emit('room_joined', { roomId, gameName: room.name, hero, members: memberNames });
-    socket.emit('game_mode_changed', { mode: room.gameMode });
-    io.to(roomId).emit('room_members_updated', { roomId, members: memberNames });
+    const players = Array.from(game.heroes).map(userId => users.get(userId)?.username);
+    socket.emit('room_joined', { roomId, gameName: game.name, hero, members: players });
+    io.to(roomId).emit('room_members_updated', { roomId, members: players });
 
-    console.log(`${user.username} joined room: ${room.name}`);
+    console.log(`${user.username} joined room: ${game.name}`);
   });
 
   // Get gameList
@@ -133,9 +132,9 @@ io.on('connection', (socket) => {
     const roomsList = Array.from(gameList.values()).map(game => ({
       gameId: game.gameId,
       name: game.name,
-      creator: game.creator,
-      memberCount: game.heroes + 1,
-      members: Array.from(game.heroes).map(userId => users.get(userId)?.username)
+      em: game.em,
+      playerCount: game.heroes.length + 1,
+      players: Array.from(game.heroes).map(userId => users.get(userId)?.username)
     }));
     socket.emit('rooms_list', roomsList);
   });

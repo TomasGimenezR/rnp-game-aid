@@ -45,16 +45,16 @@ socket.on('login_error', (error) => {
 });
 
 socket.on('room_created', (data) => {
-  currentRoom = { roomId: data.roomId, name: data.roomName, members: data.members };
-  showSuccess(`Room "${data.roomName}" created!`);
+  currentRoom = { roomId: data.roomId, name: data.gameName, members: data.members };
+  showSuccess(`Room "${data.gameName}" created!`);
   closeCreateRoomModal();
   getRooms();
 });
 
 socket.on('room_joined', (data) => {
-  currentRoom = { roomId: data.roomId, name: data.roomName, members: data.members };
+  currentRoom = { roomId: data.roomId, name: data.gameName, members: data.members };
   hopeTracker.textContent = data.hero.hope;
-  showSuccess(`Joined room "${data.roomName}"`);
+  showSuccess(`Joined room "${data.gameName}"`);
   closeHeroNameModal();
   showPage('roomPage');
   messages.innerHTML = '';
@@ -190,7 +190,7 @@ function closeCreateRoomModal() {
 
 function createRoom() {
   if (!currentUser) {
-    showError('Please login first');
+    showError('An error occurred. Please refresh the page and login again.');
     return;
   }
   const roomName = roomNameInput.value.trim();
@@ -198,13 +198,13 @@ function createRoom() {
     showError('Please enter a room name');
     return;
   }
-  socket.emit('create_room', { roomName });
+  socket.emit('create_room', { gameName: roomName });
   roomNameInput.value = '';
 }
 
 function joinRoom(roomId) {
   if (!currentUser) {
-    showError('Please login first');
+    showError('An error occurred. Please refresh the page and login again.');
     return;
   }
   pendingRoomJoin = roomId;
@@ -296,12 +296,14 @@ function displayRooms(roomsList_data) {
     return;
   }
 
+  console.log('Updating rooms list with data:', roomsList_data);
+
   roomsList.innerHTML = roomsList_data.map(room => `
     <div class="room-item">
       <div class="room-item-name">${escapeHtml(room.name)}</div>
-      <div class="room-item-info">EM: ${escapeHtml(room.creator)}</div>
-      <div class="room-item-members">Players (${room.memberCount}): ${room.members.join(', ')}</div>
-      <button class="room-item-button" onclick="joinRoom('${room.roomId}')">Join as Player</button>
+      <div class="room-item-info">EM: ${escapeHtml(room.em.username)}</div>
+      <div class="room-item-members">Players (${room.playerCount}): ${room.players? room.players.join(', ') : '-'}</div>
+      <button class="room-item-button" onclick="joinRoom('${room.gameId}')">Join as Player</button>
     </div>
   `).join('');
 }
