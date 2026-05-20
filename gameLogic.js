@@ -31,7 +31,7 @@ class Hero {
         this.hope = 0;
         this.qualities = [];
         this.dicePool = {
-            hero: 0,
+            hero: 2,
             red: 0,
             black: 0,
         };

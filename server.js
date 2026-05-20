@@ -308,7 +308,7 @@ io.on('connection', (socket) => {
             socket.emit('error', 'EMs don\'t make forced rolls!');
             return;
         }
-        const dicePool = hero.setDicePool({ hero: 0, red: 0, black: 0 });
+        const dicePool = hero.setDicePool({ hero: 2, red: 0, black: 0 });
         io.to(user.room).emit('dice_pool_reset', { heroName: hero.name, dicePool });
     });
 
