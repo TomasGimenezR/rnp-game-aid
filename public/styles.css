@@ -193,6 +193,16 @@ body {
   font-weight: 700;
 }
 
+.em-status {
+  padding: 4px 12px;
+  border-radius: 20px;
+  background: #ff6b6b;
+  color: var(--white);
+  font-weight: 700;
+  font-size: 12px;
+}
+
+
 .mode-value.downtime {
   background: var(--pacific-blue);
 }

@@ -45,14 +45,14 @@ socket.on('login_error', (error) => {
 });
 
 socket.on('room_created', (data) => {
-  currentRoom = { roomId: data.roomId, name: data.gameName, members: data.members };
+  currentRoom = { roomId: data.roomId, name: data.gameName, members: data.members, emOnline: data.emOnline };
   showSuccess(`Room "${data.gameName}" created!`);
   closeCreateRoomModal();
   getRooms();
 });
 
 socket.on('room_joined', (data) => {
-  currentRoom = { roomId: data.roomId, name: data.gameName, members: data.members };
+  currentRoom = { roomId: data.roomId, name: data.gameName, members: data.members, emOnline: data.emOnline };
   hopeTracker.textContent = data.hero.hope;
   showSuccess(`Joined room "${data.gameName}"`);
   closeHeroNameModal();
@@ -61,9 +61,19 @@ socket.on('room_joined', (data) => {
   updateRoomHeader();
 });
 
+socket.on('player_joined', (data) => {
+  if (currentRoom && currentRoom.roomId === data.roomId) {
+    showPage('roomPage');
+    messages.innerHTML = '';
+    updateRoomHeader();
+  }
+})
+
 socket.on('room_members_updated', (data) => {
   if (currentRoom && currentRoom.roomId === data.roomId) {
     currentRoom.members = data.members;
+    currentRoom.emOnline = data.emOnline;
+    updateRoomHeader();
   }
 });
 
@@ -302,7 +312,7 @@ function displayRooms(roomsList_data) {
     <div class="room-item">
       <div class="room-item-name">${escapeHtml(room.name)}</div>
       <div class="room-item-info">EM: ${escapeHtml(room.em.username)}</div>
-      <div class="room-item-members">Players (${room.playerCount}): ${room.players? room.players.join(', ') : '-'}</div>
+      <div class="room-item-members">Players (${room.playerCount}): ${room.players ? room.players.join(', ') : '-'}</div>
       <button class="room-item-button" onclick="joinRoom('${room.gameId}')">Join as Player</button>
     </div>
   `).join('');
@@ -311,6 +321,11 @@ function displayRooms(roomsList_data) {
 function updateRoomHeader() {
   if (currentRoom) {
     currentRoomName.textContent = currentRoom.name;
+    const emStatusEl = document.getElementById('emStatus');
+    if (emStatusEl) {
+      emStatusEl.textContent = currentRoom.emOnline ? '' : 'EM offline';
+      emStatusEl.style.display = currentRoom.emOnline ? 'none' : 'block';
+    }
   }
 }
 
