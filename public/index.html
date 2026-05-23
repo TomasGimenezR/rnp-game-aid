@@ -33,45 +33,52 @@
   </div>
 
   <!-- Room Selection Page -->
-  <div class="page" id="roomsPage" style="display: none;">
-    <div class="container rooms-container">
+  <div class="page" id="gameRoomsPage" style="display: none;">
+    <div class="container gameRooms-container">
       <div class="header">
         <img id="rnp-logo" src="imgs/rnp_logo.png" alt="R&P Logo">
         <h1>Virtual Game Aid</h1>
         <div class="status" id="statusRooms" style="display: none;">Connected</div>
       </div>
 
-      <div class="rooms-section">
+      <div class="gameRooms-section">
         <h2>Available Rooms</h2>
-        <button class="create-room-btn" onclick="openCreateRoomModal()">+ Create New Room</button>
-        <div class="rooms-grid" id="roomsList">
-          <p style="color: #999; text-align: center;">No rooms available</p>
+        <button class="create-gameRoom-btn" onclick="openCreateGameRoomModal()">+ Create New Room</button>
+        <div class="gameRooms-grid" id="gameRoomsList">
+          <p style="color: #999; text-align: center;">No game rooms available</p>
         </div>
       </div>
     </div>
   </div>
 
   <!-- Room Page -->
-  <div class="page" id="roomPage" style="display: none;">
-    <div class="room-container">
-  <div class="room-header">
-        <button class="leave-button" onclick="confirmLeaveRoom()">← Leave Room</button>
-        <div class="room-header-center">
-          <h1 id="currentRoomName" class="room-title"></h1>
+  <div class="page" id="gameRoomPage" style="display: none;">
+    <div class="gameRoom-container">
+  <div class="gameRoom-header">
+        <button class="leave-button" onclick="confirmLeaveGameRoom()">← Leave Room</button>
+        <div class="gameRoom-header-center">
+          <h1 id="currentRoomName" class="gameRoom-title"></h1>
           <div class="game-mode-indicator" id="gameModeIndicator">
             <span class="mode-label">Mode:</span>
             <span class="mode-value" id="gameModeDisplay">Combat</span>
           </div>
+          <div class="em-status" id="emStatus" style="display: none;"></div>
         </div>
         <button class="mode-toggle-btn" id="modeToggleBtn" onclick="toggleGameMode()">Toggle Mode</button>
       </div>
 
       <div class="hope-tracker-bar">
-        <span class="hope-label">Hope:</span>
-        <span class="hope-value" id="hopeTracker">0</span>
+        <div class="tracker-left">
+          <span class="hope-label">Hope:</span>
+          <span class="hope-value" id="hopeTracker">0</span>
+        </div>
+        <div class="tracker-right">
+          <span class="dread-label">Dread:</span>
+          <span class="dread-value" id="dreadTracker">0</span>
+        </div>
       </div>
 
-      <div class="room-content">
+      <div class="gameRoom-content">
         <div class="chat-section">
           <h3>Messages</h3>
           <div class="messages" id="messages"></div>
@@ -105,6 +112,7 @@
             <button onclick="spendHope()">Spend Hope</button>
             <button onclick="addOneHope()">+1 Hope</button>
             <button onclick="setHope()">Set Hope</button>
+            <button onclick="spendDread()">Spend Dread</button>
           </div>
         </div>
       </div>
@@ -116,14 +124,14 @@
     <div class="modal-content">
       <div class="modal-header">
         <h2>Create New Room</h2>
-        <button class="modal-close" onclick="closeCreateRoomModal()">&times;</button>
+        <button class="modal-close" onclick="closeCreateGameRoomModal()">&times;</button>
       </div>
       <div class="modal-body">
-        <input type="text" id="roomNameInput" placeholder="Enter room name" class="modal-input" />
+        <input type="text" id="gameRoomNameInput" placeholder="Enter game room name" class="modal-input" />
       </div>
       <div class="modal-footer">
-        <button class="modal-btn-cancel" onclick="closeCreateRoomModal()">Cancel</button>
-        <button class="modal-btn-submit" onclick="createRoom()">Create Room</button>
+        <button class="modal-btn-cancel" onclick="closeCreateGameRoomModal()">Cancel</button>
+        <button class="modal-btn-submit" onclick="createGameRoom()">Create Game Room</button>
       </div>
     </div>
   </div>
@@ -138,8 +146,8 @@
         <input type="text" id="heroNameInput" placeholder="Enter your hero's name" class="modal-input" />
       </div>
       <div class="modal-footer">
-        <button class="modal-btn-cancel" onclick="cancelJoinRoom()">Cancel</button>
-        <button class="modal-btn-submit" onclick="confirmHeroName()">Join Room</button>
+        <button class="modal-btn-cancel" onclick="closeHeroNameModal()">Cancel</button>
+        <button class="modal-btn-submit" onclick="confirmHeroName()">Join Game Room</button>
       </div>
     </div>
   </div>
@@ -151,11 +159,11 @@
         <h2>Leave Room?</h2>
       </div>
       <div class="modal-body">
-        <p>Are you sure you want to leave this room?</p>
+        <p>Are you sure you want to leave this game room?</p>
       </div>
       <div class="modal-footer">
         <button class="modal-btn-cancel" onclick="closeLeaveConfirmModal()">Cancel</button>
-        <button class="modal-btn-submit" onclick="leaveRoom()">Leave Room</button>
+        <button class="modal-btn-submit" onclick="leaveGameRoom()">Leave Game Room</button>
       </div>
     </div>
   </div>

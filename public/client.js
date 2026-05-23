@@ -1,24 +1,26 @@
 const socket = io();
 let currentUser = null;
-let currentRoom = null;
-let pendingRoomJoin = null;
+let currentGameRoom = null;
+let pendingGameRoomJoin = null;
 let currentGameMode = 'combat';
 
 // DOM Elements
 const loginPage = document.getElementById('loginPage');
-const roomsPage = document.getElementById('roomsPage');
-const roomPage = document.getElementById('roomPage');
+const gameRoomsPage = document.getElementById('gameRoomsPage');
+const gameRoomPage = document.getElementById('gameRoomPage');
+const gameRoomContainer = document.querySelector('.gameRoom-container');
 const statusEl = document.getElementById('status');
 const errorEl = document.getElementById('error');
 const successEl = document.getElementById('success');
 const usernameInput = document.getElementById('usernameInput');
-const roomNameInput = document.getElementById('roomNameInput');
+const gameRoomNameInput = document.getElementById('gameRoomNameInput');
 const heroNameInput = document.getElementById('heroNameInput');
-const roomsList = document.getElementById('roomsList');
+const gameRoomsList = document.getElementById('gameRoomsList');
 const messageInput = document.getElementById('messageInput');
 const messages = document.getElementById('messages');
 const hopeTracker = document.getElementById('hopeTracker');
-const currentRoomName = document.getElementById('currentRoomName');
+const dreadTracker = document.getElementById('dreadTracker');
+const currentGameRoomName = document.getElementById('currentGameRoomName');
 
 // Socket event listeners
 socket.on('connect', () => {
@@ -28,15 +30,15 @@ socket.on('connect', () => {
 socket.on('disconnect', () => {
   updateStatus('Disconnected', false);
   currentUser = null;
-  currentRoom = null;
+  currentGameRoom = null;
   showPage('loginPage');
 });
 
 socket.on('login_success', (data) => {
   currentUser = data;
   showSuccess(`Welcome, ${data.username}!`);
-  getRooms();
-  showPage('roomsPage');
+  getGameRooms();
+  showPage('gameRoomsPage');
   usernameInput.value = '';
 });
 
@@ -44,39 +46,49 @@ socket.on('login_error', (error) => {
   showError(error);
 });
 
-socket.on('room_created', (data) => {
-  currentRoom = { roomId: data.roomId, name: data.roomName, members: data.members };
-  showSuccess(`Room "${data.roomName}" created!`);
-  closeCreateRoomModal();
-  getRooms();
+socket.on('create:gameRoom', (data) => {
+  currentGameRoom = { gameRoomId: data.gameRoomId, name: data.gameRoomName, members: data.members, emOnline: data.emOnline };
+  showSuccess(`Game Room "${data.gameRoomName}" created!`);
+  closeCreateGameRoomModal();
+  getGameRooms();
 });
 
-socket.on('room_joined', (data) => {
-  currentRoom = { roomId: data.roomId, name: data.roomName, members: data.members };
+socket.on('join:gameRoom', (data) => {
+  currentGameRoom = { gameRoomId: data.gameRoomId, name: data.gameRoomName, members: data.members, emOnline: data.emOnline };
   hopeTracker.textContent = data.hero.hope;
-  showSuccess(`Joined room "${data.roomName}"`);
+  showSuccess(`Joined gameRoom "${data.gameRoomName}"`);
   closeHeroNameModal();
-  showPage('roomPage');
+  showPage('gameRoomPage');
   messages.innerHTML = '';
-  updateRoomHeader();
+  updateGameRoomHeader();
 });
 
-socket.on('room_members_updated', (data) => {
-  if (currentRoom && currentRoom.roomId === data.roomId) {
-    currentRoom.members = data.members;
+socket.on('player_joined', (data) => {
+  if (currentGameRoom && currentGameRoom.gameRoomId === data.gameRoomId) {
+    showPage('gameRoomPage');
+    messages.innerHTML = '';
+    updateGameRoomHeader();
+  }
+})
+
+socket.on('gameRoom_members_updated', (data) => {
+  if (currentGameRoom && currentGameRoom.gameRoomId === data.gameRoomId) {
+    currentGameRoom.members = data.members;
+    currentGameRoom.emOnline = data.emOnline;
+    updateGameRoomHeader();
   }
 });
 
-socket.on('rooms_list', (roomsList_data) => {
-  displayRooms(roomsList_data);
+socket.on('list:gameRooms', (gameRoomsList_data) => {
+  displayGameRooms(gameRoomsList_data);
 });
 
-socket.on('room_list_updated', (roomsList_data) => {
-  displayRooms(roomsList_data);
+socket.on('gameRoom_list_updated', (gameRoomsList_data) => {
+  displayGameRooms(gameRoomsList_data);
 });
 
 socket.on('new_message', (data) => {
-  if (currentRoom) {
+  if (currentGameRoom) {
     const messageEl = document.createElement('div');
     messageEl.className = 'message';
     const time = new Date(data.timestamp).toLocaleTimeString();
@@ -91,15 +103,17 @@ socket.on('new_message', (data) => {
 });
 
 socket.on('action_roll_result', (data) => {
-  const { text } = data;
+  const { text, madeAnEscape, dread } = data;
   let { hero } = data;
   if (hero == null)
     hero = { name: 'Unknown Hero' };
+  dreadTracker.textContent = dread;
   const messageEl = document.createElement('div');
   messageEl.className = 'message';
   messageEl.innerHTML = `
     <div class="message-heroname">${escapeHtml(hero.name)}</div>
     <div class="message-text"><strong>Action Roll Results:</strong> ${text}</div>
+    ${madeAnEscape ? '<div class="message-escape"><em> Made an Escape! </em></div>' : ''}
   `;
   messages.appendChild(messageEl);
   messages.scrollTop = messages.scrollHeight;
@@ -115,14 +129,17 @@ socket.on('update:hero', (data) => {
   hopeTracker.textContent = hero.hope;
 });
 
-socket.on('spend:hope', (data) => {
-  const { hero } = data;
-  hopeTracker.textContent = hero.hope;
+socket.on('update:currencies', (data) => {
+  const { hero, dread } = data;
+  if (hero)
+    hopeTracker.textContent = hero.hope;
+  if (dread)
+    dreadTracker.textContent = dread;
   const messageEl = document.createElement('div');
   messageEl.className = 'message';
   messageEl.innerHTML = `
-    <div class="message-heroname">${escapeHtml(hero.name)}</div>
-    <div class="message-text"><strong>Spent Hope!</strong></div>
+    <div class="message-heroname">${escapeHtml(hero? hero.name: "EM")}</div>
+    <div class="message-text"><strong>${hero ? 'Spent Hope!' : 'Spent Dread!'}</strong></div>
   `;
   messages.appendChild(messageEl);
   messages.scrollTop = messages.scrollHeight;
@@ -162,11 +179,20 @@ socket.on('game_mode_changed', (data) => {
   updateGameMode(mode);
 });
 
+socket.on('update:currencies', (data) => {
+  if (data.dread != null) {
+    gameRoomContainer.classList.add('buzz');
+    setTimeout(() => {
+      gameRoomContainer.classList.remove('buzz');
+    }, 500);
+  }
+});
+
 // Functions
 function showPage(pageName) {
   loginPage.style.display = pageName === 'loginPage' ? 'flex' : 'none';
-  roomsPage.style.display = pageName === 'roomsPage' ? 'flex' : 'none';
-  roomPage.style.display = pageName === 'roomPage' ? 'flex' : 'none';
+  gameRoomsPage.style.display = pageName === 'gameRoomsPage' ? 'flex' : 'none';
+  gameRoomPage.style.display = pageName === 'gameRoomPage' ? 'flex' : 'none';
 }
 
 function login() {
@@ -178,36 +204,36 @@ function login() {
   socket.emit('login', username);
 }
 
-function openCreateRoomModal() {
+function openCreateGameRoomModal() {
   document.getElementById('createRoomModal').classList.add('show');
-  document.getElementById('roomNameInput').focus();
+  document.getElementById('gameRoomNameInput').focus();
 }
 
-function closeCreateRoomModal() {
+function closeCreateGameRoomModal() {
   document.getElementById('createRoomModal').classList.remove('show');
-  document.getElementById('roomNameInput').value = '';
+  document.getElementById('gameRoomNameInput').value = '';
 }
 
-function createRoom() {
+function createGameRoom() {
   if (!currentUser) {
-    showError('Please login first');
+    showError('An error occurred. Please refresh the page and login again.');
     return;
   }
-  const roomName = roomNameInput.value.trim();
-  if (!roomName) {
-    showError('Please enter a room name');
+  const gameRoomName = gameRoomNameInput.value.trim();
+  if (!gameRoomName) {
+    showError('Please enter a game room name');
     return;
   }
-  socket.emit('create_room', { roomName });
-  roomNameInput.value = '';
+  socket.emit('create:gameRoom', { gameName: gameRoomName });
+  gameRoomNameInput.value = '';
 }
 
-function joinRoom(roomId) {
+function joinGameRoom(gameRoomId) {
   if (!currentUser) {
-    showError('Please login first');
+    showError('An error occurred. Please refresh the page and login again.');
     return;
   }
-  pendingRoomJoin = roomId;
+  pendingGameRoomJoin = gameRoomId;
   document.getElementById('heroNameModal').classList.add('show');
   heroNameInput.focus();
 }
@@ -218,24 +244,24 @@ function confirmHeroName() {
     showError('Hero name cannot be empty');
     return;
   }
-  if (!pendingRoomJoin) {
-    showError('Error: No room selected');
+  if (!pendingGameRoomJoin) {
+    showError('Error: No game room selected');
     return;
   }
 
   const data = {
-    roomId: pendingRoomJoin,
+    gameRoomId: pendingGameRoomJoin,
     heroName: heroName,
     heroArchetypeId: 1,
     heroPathId: 1
   };
-  socket.emit('join_room', data);
+  socket.emit('join:gameRoom', data);
   heroNameInput.value = '';
 }
 
 function cancelJoinRoom() {
   closeHeroNameModal();
-  pendingRoomJoin = null;
+  pendingGameRoomJoin = null;
 }
 
 function closeHeroNameModal() {
@@ -243,7 +269,7 @@ function closeHeroNameModal() {
   heroNameInput.value = '';
 }
 
-function confirmLeaveRoom() {
+function confirmLeaveGameRoom() {
   document.getElementById('leaveConfirmModal').classList.add('show');
 }
 
@@ -251,13 +277,13 @@ function closeLeaveConfirmModal() {
   document.getElementById('leaveConfirmModal').classList.remove('show');
 }
 
-function leaveRoom() {
-  if (!currentRoom) return;
+function leaveGameRoom() {
+  if (!currentGameRoom) return;
   closeLeaveConfirmModal();
-  socket.emit('leave_room');
-  currentRoom = null;
-  getRooms();
-  showPage('roomsPage');
+  socket.emit('leave:gameRoom');
+  currentGameRoom = null;
+  getGameRooms();
+  showPage('gameRoomsPage');
 }
 
 function toggleGameMode() {
@@ -276,8 +302,8 @@ function updateGameMode(mode) {
 }
 
 function sendMessage() {
-  if (!currentRoom) {
-    showError('Not in a room');
+  if (!currentGameRoom) {
+    showError('Not in a game room');
     return;
   }
   const message = messageInput.value.trim();
@@ -286,29 +312,34 @@ function sendMessage() {
   messageInput.value = '';
 }
 
-function getRooms() {
-  socket.emit('get_rooms');
+function getGameRooms() {
+  socket.emit('get:gameRooms');
 }
 
-function displayRooms(roomsList_data) {
-  if (roomsList_data.length === 0) {
-    roomsList.innerHTML = '<p style="color: #999; text-align: center; grid-column: 1/-1;">No rooms available</p>';
+function displayGameRooms(gameRoomsList_data) {
+  if (gameRoomsList_data.length === 0) {
+    gameRoomsList.innerHTML = '<p style="color: #999; text-align: center; grid-column: 1/-1;">No game rooms available</p>';
     return;
   }
 
-  roomsList.innerHTML = roomsList_data.map(room => `
-    <div class="room-item">
-      <div class="room-item-name">${escapeHtml(room.name)}</div>
-      <div class="room-item-info">EM: ${escapeHtml(room.creator)}</div>
-      <div class="room-item-members">Players (${room.memberCount}): ${room.members.join(', ')}</div>
-      <button class="room-item-button" onclick="joinRoom('${room.roomId}')">Join as Player</button>
+  gameRoomsList.innerHTML = gameRoomsList_data.map(gameRoom => `
+    <div class="gameRoom-item">
+      <div class="gameRoom-item-name">${escapeHtml(gameRoom.name)}</div>
+      <div class="gameRoom-item-info">EM: ${escapeHtml(gameRoom.em.username)}</div>
+      <div class="gameRoom-item-members">Players (${gameRoom.playerCount}): ${gameRoom.players ? gameRoom.players.join(', ') : '-'}</div>
+      <button class="gameRoom-item-button" onclick="joinGameRoom('${gameRoom.gameRoomId}')">Join as Player</button>
     </div>
   `).join('');
 }
 
-function updateRoomHeader() {
-  if (currentRoom) {
-    currentRoomName.textContent = currentRoom.name;
+function updateGameRoomHeader() {
+  if (currentGameRoom) {
+    currentRoomName.textContent = currentGameRoom.name;
+    const emStatusEl = document.getElementById('emStatus');
+    if (emStatusEl) {
+      emStatusEl.textContent = currentGameRoom.emOnline ? '' : 'EM offline';
+      emStatusEl.style.display = currentGameRoom.emOnline ? 'none' : 'block';
+    }
   }
 }
 
@@ -391,6 +422,15 @@ function spendHope() {
   socket.emit('spend:hope', parseInt(hopeSpent));
 }
 
+function spendDread() {
+  const dreadSpent = prompt("How much Dread are you spending? (Enter a number)");
+  if (!dreadSpent || isNaN(dreadSpent) || parseInt(dreadSpent) < 0) {
+    showError('Please enter a valid number for Dread');
+    return;
+  }
+  socket.emit('spend:dread', parseInt(dreadSpent));
+}
+
 function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
@@ -402,8 +442,8 @@ usernameInput.addEventListener('keypress', (e) => {
   if (e.key === 'Enter') login();
 });
 
-roomNameInput.addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') createRoom();
+gameRoomNameInput.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') createGameRoom();
 });
 
 heroNameInput.addEventListener('keypress', (e) => {
@@ -446,7 +486,7 @@ function submitDicePool() {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     closeDiceModal();
-    closeCreateRoomModal();
+    closeCreateGameRoomModal();
     closeHeroNameModal();
   }
 });

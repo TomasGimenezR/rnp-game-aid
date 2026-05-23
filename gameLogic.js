@@ -2,12 +2,15 @@ function getRandomInt() {
     return Math.floor(Math.random() * 6) + 1;
 }
 
-class Game {
-    constructor(roomId, em) {
-        this.roomId = roomId;
+class GameRoom {
+    constructor(gameRoomId, gameName, em) {
+        this.gameRoomId = gameRoomId;
+        this.name = gameName;
         this.em = em;
         this.heroes = [];
         this.dread = 0;
+        this.createdAt = new Date();
+        this.gameState = 'Downtime';
     }
 
     addHero(hero) {
@@ -121,8 +124,13 @@ class Hero {
     // Perform an Action Roll, adding one Hero Die to the pool
     actionRoll = () => {
         this.dicePool.hero++;
-        const diceResults = this.rollDice();
+        let madeAnEscape = false;
+        let diceResults = this.rollDice();
         this.hope += diceResults.suns;
+        if (diceResults.skulls == 0) 
+            madeAnEscape = true;
+        
+        diceResults.madeAnEscape = madeAnEscape;
         return diceResults;
     }
 
@@ -188,4 +196,4 @@ class Hero {
 
 }
 
-export { Hero, Game };
+export { Hero, GameRoom };
