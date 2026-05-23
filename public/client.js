@@ -8,6 +8,7 @@ let currentGameMode = 'combat';
 const loginPage = document.getElementById('loginPage');
 const gameRoomsPage = document.getElementById('gameRoomsPage');
 const gameRoomPage = document.getElementById('gameRoomPage');
+const gameRoomContainer = document.querySelector('.gameRoom-container');
 const statusEl = document.getElementById('status');
 const errorEl = document.getElementById('error');
 const successEl = document.getElementById('success');
@@ -176,6 +177,15 @@ socket.on('error', (error) => {
 socket.on('game_mode_changed', (data) => {
   const { mode } = data;
   updateGameMode(mode);
+});
+
+socket.on('update:currencies', (data) => {
+  if (data.dread != null) {
+    gameRoomContainer.classList.add('buzz');
+    setTimeout(() => {
+      gameRoomContainer.classList.remove('buzz');
+    }, 500);
+  }
 });
 
 // Functions

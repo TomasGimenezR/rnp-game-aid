@@ -68,6 +68,33 @@ body {
   }
 }
 
+@keyframes buzz {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  12.5% {
+    transform: translateX(-10px);
+  }
+  25% {
+    transform: translateX(10px);
+  }
+  37.5% {
+    transform: translateX(-10px);
+  }
+  50% {
+    transform: translateX(10px);
+  }
+  62.5% {
+    transform: translateX(-10px);
+  }
+  75% {
+    transform: translateX(10px);
+  }
+  87.5% {
+    transform: translateX(-10px);
+  }
+}
+
 /* Page Navigation */
 .page {
   min-height: 100vh;
@@ -146,6 +173,10 @@ body {
   margin: 0 auto;
   max-height: 90vh;
   overflow: hidden;
+}
+
+.gameRoom-container.buzz {
+  animation: buzz 0.5s;
 }
 
 .gameRoom-header {
