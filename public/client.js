@@ -18,6 +18,7 @@ const gameRoomsList = document.getElementById('gameRoomsList');
 const messageInput = document.getElementById('messageInput');
 const messages = document.getElementById('messages');
 const hopeTracker = document.getElementById('hopeTracker');
+const dreadTracker = document.getElementById('dreadTracker');
 const currentGameRoomName = document.getElementById('currentGameRoomName');
 
 // Socket event listeners
@@ -101,11 +102,11 @@ socket.on('new_message', (data) => {
 });
 
 socket.on('action_roll_result', (data) => {
-  const { text, madeAnEscape } = data;
+  const { text, madeAnEscape, dread } = data;
   let { hero } = data;
-  console.log('Made an Escape:', madeAnEscape);
   if (hero == null)
     hero = { name: 'Unknown Hero' };
+  dreadTracker.textContent = dread;
   const messageEl = document.createElement('div');
   messageEl.className = 'message';
   messageEl.innerHTML = `
@@ -127,14 +128,17 @@ socket.on('update:hero', (data) => {
   hopeTracker.textContent = hero.hope;
 });
 
-socket.on('spend:hope', (data) => {
-  const { hero } = data;
-  hopeTracker.textContent = hero.hope;
+socket.on('update:currencies', (data) => {
+  const { hero, dread } = data;
+  if (hero)
+    hopeTracker.textContent = hero.hope;
+  if (dread)
+    dreadTracker.textContent = dread;
   const messageEl = document.createElement('div');
   messageEl.className = 'message';
   messageEl.innerHTML = `
-    <div class="message-heroname">${escapeHtml(hero.name)}</div>
-    <div class="message-text"><strong>Spent Hope!</strong></div>
+    <div class="message-heroname">${escapeHtml(hero? hero.name: "EM")}</div>
+    <div class="message-text"><strong>${hero ? 'Spent Hope!' : 'Spent Dread!'}</strong></div>
   `;
   messages.appendChild(messageEl);
   messages.scrollTop = messages.scrollHeight;
@@ -406,6 +410,15 @@ function spendHope() {
     return;
   }
   socket.emit('spend:hope', parseInt(hopeSpent));
+}
+
+function spendDread() {
+  const dreadSpent = prompt("How much Dread are you spending? (Enter a number)");
+  if (!dreadSpent || isNaN(dreadSpent) || parseInt(dreadSpent) < 0) {
+    showError('Please enter a valid number for Dread');
+    return;
+  }
+  socket.emit('spend:dread', parseInt(dreadSpent));
 }
 
 function escapeHtml(text) {

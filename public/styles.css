@@ -251,16 +251,22 @@ body {
   padding: 15px 30px;
   display: flex;
   align-items: center;
-  gap: 15px;
+  justify-content: space-between;
   font-size: 20px;
   font-weight: 700;
 }
 
-.hope-label {
+.tracker-left, .tracker-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.hope-label, .dread-label {
   color: var(--white);
 }
 
-.hope-value {
+.hope-value, .dread-value {
   color: var(--blazing-flame);
   font-size: 28px;
 }

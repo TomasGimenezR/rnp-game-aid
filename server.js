@@ -25,7 +25,7 @@ const PORT = 3000;
 app.use(express.static(join(__dirname, 'public')));
 
 // Store connected users and games
-const users = new Map(); // userId -> { username, socketId, activeGameId }
+const users = new Map(); // userId -> { username, socketId, activeGameRoomId }
 const gameRoomsList = new Map(); // gameId -> { name, creator, members: Set, gameMode: 'combat'|'downtime' }
 
 // Socket.io connection handling
@@ -46,7 +46,7 @@ io.on('connection', (socket) => {
       return;
     }
 
-    users.set(socket.id, { username, socketId: socket.id, activeGameId: null });
+    users.set(socket.id, { username, socketId: socket.id, activeGameRoomId: null });
     socket.emit('login_success', { userId: socket.id, username });
     console.log(`✅ User logged in: ${username}`);
   });
@@ -69,7 +69,7 @@ io.on('connection', (socket) => {
     const gameRoom = new GameRoom(gameRoomId, gameName, user);
 
     gameRoomsList.set(gameRoomId, gameRoom);
-    user.activeGameId = gameRoomId;
+    user.activeGameRoomId = gameRoomId;
 
     socket.join(gameRoomId);
     socket.emit('create:gameRoom', { gameRoomId, gameRoomName: gameRoom.name, members: [user.username], emOnline: true });
@@ -101,22 +101,22 @@ io.on('connection', (socket) => {
     }
 
     // Leave previous gameRoom if in one
-    if (user.activeGameId) {
-        socket.leave(user.activeGameId);
-        const prevGameRoom = gameRoomsList.get(user.activeGameId);
+    if (user.activeGameRoomId) {
+        socket.leave(user.activeGameRoomId);
+        const prevGameRoom = gameRoomsList.get(user.activeGameRoomId);
         if (prevGameRoom) {
             const index = prevGameRoom.heroes.indexOf(socket.id);
             if (index > -1) { // only splice array when item is found
               prevGameRoom.heroes.splice(index, 1);
             }              
             if (prevGameRoom.members.size === 0) {
-                gameRoomsList.delete(user.activeGameId);
+                gameRoomsList.delete(user.activeGameRoomId);
             }
         }
     }
 
     // Join new gameRoom
-    user.activeGameId = gameRoomId;
+    user.activeGameRoomId = gameRoomId;
     gameRoom.heroes.push(user);
     socket.join(gameRoomId);
 
@@ -154,8 +154,9 @@ io.on('connection', (socket) => {
 
   socket.on('action_roll', () => {
     const user = users.get(socket.id);
+    const gameRoom = gameRoomsList.get(user.activeGameRoomId);
     const hero = socket.hero;
-    if (!user || !user.activeGameId) {
+    if (!user || !user.activeGameRoomId) {
       socket.emit('error', 'Not in a gameRoom');
       return;
     }
@@ -165,15 +166,16 @@ io.on('connection', (socket) => {
     }
 
     const rollResults = hero.actionRoll();
+    gameRoom.dread += rollResults.skulls; // Add Dread to gameRoom based on skulls rolled
     const text = ` ${rollResults.heroDiceResults.join(' ')} ${rollResults.redDiceResults.join(' ')} ${rollResults.blackDiceResults.join(' ')}</br>Suns: ${rollResults.suns}</br>Skulls: ${rollResults.skulls}`;
-    io.to(user.activeGameId).emit('action_roll_result', { text, hero, madeAnEscape: rollResults.madeAnEscape });
+    io.to(user.activeGameRoomId).emit('action_roll_result', { text, hero, madeAnEscape: rollResults.madeAnEscape, dread: gameRoom.dread });
     io.to(socket.id).emit('show:hope', { hero }); // Update Hope just for player rolling
   });
 
   socket.on('forced_roll', () => {
     const user = users.get(socket.id);
     const hero = socket.hero;
-    if (!user || !user.activeGameId) {
+    if (!user || !user.activeGameRoomId) {
       socket.emit('error', 'Not in a gameRoom');
       return;
     }
@@ -187,13 +189,13 @@ io.on('connection', (socket) => {
         </br><em>Suns:</em> ${rollResults.suns}
         </br><em>Skulls:</em> ${rollResults.skulls}
         </br> <strong><label style="color: ${rollResults.success ? 'green;">SUCCESS' : 'red;">FAILURE'}</label></strong>`;
-    io.to(user.activeGameId).emit('action_roll_result', { text, hero });
+    io.to(user.activeGameRoomId).emit('action_roll_result', { text, hero });
   });
 
   socket.on('replace:red', () => {
     const user = users.get(socket.id);
     const hero = socket.hero;
-    if (!user || !user.activeGameId) {
+    if (!user || !user.activeGameRoomId) {
       socket.emit('error', 'Not in a gameRoom');
       return;
     }
@@ -203,13 +205,13 @@ io.on('connection', (socket) => {
     }
 
     const dicePool = hero.replaceForRedDie();
-    io.to(user.activeGameId).emit('dice_pool_updated', { heroName: hero.name, dicePool });
+    io.to(user.activeGameRoomId).emit('dice_pool_updated', { heroName: hero.name, dicePool });
   });
 
   socket.on('add:red', () => {
     const user = users.get(socket.id);
     const hero = socket.hero;
-    if (!user || !user.activeGameId) {
+    if (!user || !user.activeGameRoomId) {
       socket.emit('error', 'Not in a gameRoom');
       return;
     }
@@ -219,13 +221,13 @@ io.on('connection', (socket) => {
     }
 
     const dicePool = hero.addRedDie();
-    io.to(user.activeGameId).emit('dice_pool_updated', { heroName: hero.name, dicePool });
+    io.to(user.activeGameRoomId).emit('dice_pool_updated', { heroName: hero.name, dicePool });
   });
 
   socket.on('subtract:red', () => {
     const user = users.get(socket.id);
     const hero = socket.hero;
-    if (!user || !user.activeGameId) {
+    if (!user || !user.activeGameRoomId) {
       socket.emit('error', 'Not in a Game Room');
       return;
     }
@@ -235,13 +237,13 @@ io.on('connection', (socket) => {
     }
 
     const dicePool = hero.subtractRedDie();
-    io.to(user.activeGameId).emit('dice_pool_updated', { heroName: hero.name, dicePool });
+    io.to(user.activeGameRoomId).emit('dice_pool_updated', { heroName: hero.name, dicePool });
   });
 
   socket.on('replace:black', () => {
     const user = users.get(socket.id);
     const hero = socket.hero;
-    if (!user || !user.activeGameId) {
+    if (!user || !user.activeGameRoomId) {
       socket.emit('error', 'Not in a Game Room');
       return;
     }
@@ -251,13 +253,13 @@ io.on('connection', (socket) => {
     }
 
     const dicePool = hero.replaceForBlackDie();
-    io.to(user.activeGameId).emit('dice_pool_updated', { heroName: hero.name, dicePool });
+    io.to(user.activeGameRoomId).emit('dice_pool_updated', { heroName: hero.name, dicePool });
   });
 
     socket.on('add:black', () => {
       const user = users.get(socket.id);
       const hero = socket.hero;
-      if (!user || !user.activeGameId) {
+      if (!user || !user.activeGameRoomId) {
         socket.emit('error', 'Not in a Game Room');
         return;
       }
@@ -267,13 +269,13 @@ io.on('connection', (socket) => {
       }
 
       const dicePool = hero.addBlackDie();
-      io.to(user.activeGameId).emit('dice_pool_updated', { heroName: hero.name, dicePool });
+      io.to(user.activeGameRoomId).emit('dice_pool_updated', { heroName: hero.name, dicePool });
     });
 
     socket.on('subtract:black', () => {
       const user = users.get(socket.id);
       const hero = socket.hero;
-      if (!user || !user.activeGameId) {
+      if (!user || !user.activeGameRoomId) {
         socket.emit('error', 'Not in a Game Room');
         return;
       }
@@ -283,13 +285,13 @@ io.on('connection', (socket) => {
       }
 
       const dicePool = hero.subtractBlackDie();
-      io.to(user.activeGameId).emit('dice_pool_updated', { heroName: hero.name, dicePool });
+      io.to(user.activeGameRoomId).emit('dice_pool_updated', { heroName: hero.name, dicePool });
     });
 
     socket.on('set:dice', (dicePool) => {
         const user = users.get(socket.id);
         const hero = socket.hero;
-        if (!user || !user.activeGameId) {
+        if (!user || !user.activeGameRoomId) {
             socket.emit('error', 'Not in a Game Room');
             return;
         }
@@ -298,14 +300,14 @@ io.on('connection', (socket) => {
             return;
         }
         hero.setDicePool(dicePool);
-        io.to(user.activeGameId).emit('dice_pool_updated', { heroName: hero.name, dicePool });
+        io.to(user.activeGameRoomId).emit('dice_pool_updated', { heroName: hero.name, dicePool });
         io.to(socket.id).emit('show:hope', { hero });
     });
 
     socket.on('reset_dice_pool', () => {
         const user = users.get(socket.id);
         const hero = socket.hero;
-        if (!user || !user.activeGameId) {
+        if (!user || !user.activeGameRoomId) {
         socket.emit('error', 'Not in a Game Room');
         return;
         }
@@ -314,13 +316,13 @@ io.on('connection', (socket) => {
             return;
         }
         const dicePool = hero.setDicePool({ hero: 2, red: 0, black: 0 });
-        io.to(user.activeGameId).emit('dice_pool_reset', { heroName: hero.name, dicePool });
+        io.to(user.activeGameRoomId).emit('dice_pool_reset', { heroName: hero.name, dicePool });
     });
 
   socket.on('set:hope', (hope) => {
     const user = users.get(socket.id);
     const hero = socket.hero;
-    if (!user || !user.activeGameId) {
+    if (!user || !user.activeGameRoomId) {
       socket.emit('error', 'Not in a Game Room');
       return;
     }
@@ -344,7 +346,7 @@ io.on('connection', (socket) => {
   socket.on('spend:hope', (hopeSpent) => {
     const user = users.get(socket.id);
     const hero = socket.hero;
-    if (!user || !user.activeGameId) {
+    if (!user || !user.activeGameRoomId) {
       socket.emit('error', 'Not in a Game Room');
       return;
     }
@@ -359,45 +361,47 @@ io.on('connection', (socket) => {
     }
 
     hero.spendHope(hopeSpent);
-    io.to(socket.id).emit('spend:hope', { hero });
+    io.to(socket.id).emit('update:currencies', { hero });
   });
 
-  // socket.on('spend:dread', (dreadSpent) => {
-  //   const user = users.get(socket.id);
-  //   const hero = socket.hero;
-  //   if (!user || !user.activeGameId) {
-  //     socket.emit('error', 'Not in a Game Room');
-  //     return;
-  //   }
-  //   if (!hero) {
-  //       socket.emit('error', 'It is the players who spend Dread, not the EM!');
-  //       return;
-  //   }
+  socket.on('spend:dread', (dreadSpent) => {
+    const user = users.get(socket.id);
+    const hero = socket.hero;
+    const gameRoom = gameRoomsList.get(user.activeGameRoomId);
+    if (!user || !user.activeGameRoomId) {
+      socket.emit('error', 'Not in a Game Room');
+      return;
+    }
+    if (hero) {
+        socket.emit('error', 'It is the EM who spend Dread, not the Players!');
+        return;
+    }
 
-  //   if (hero.dread < dreadSpent) {
-  //     socket.emit('error', 'Not enough Dread to spend');
-  //     return;
-  //   }
+    if (gameRoom.dread < dreadSpent) {
+      socket.emit('error', 'Not enough Dread to spend');
+      return;
+    }
 
-  //   hero.spendDread(dreadSpent);
-  // });
+    gameRoom.spendDread(dreadSpent);
+    io.to(socket.id).emit('update:currencies', { hero, dread: gameRoom.dread });
+  });
 
   // Send message to gameRoom
   socket.on('send_message', (message) => {
     const user = users.get(socket.id);
     const heroName = user?.username || socket.hero?.name || 'Unknown Hero';
-    if (!user || !user.activeGameId) {
+    if (!user || !user.activeGameRoomId) {
       socket.emit('error', 'Not in a Game Room');
       return;
     }
 
-    const gameRoom = gameRoomsList.get(user.activeGameId);
+    const gameRoom = gameRoomsList.get(user.activeGameRoomId);
     if (!gameRoom) {
       socket.emit('error', 'Game Room not found');
       return;
     }
 
-    io.to(user.activeGameId).emit('new_message', {
+    io.to(user.activeGameRoomId).emit('new_message', {
       username: user.username,
       heroName,
       message,
@@ -408,10 +412,10 @@ io.on('connection', (socket) => {
   // Leave gameRoom
   socket.on('leave_room', () => {
     const user = users.get(socket.id);
-    if (!user || !user.activeGameId) return;
+    if (!user || !user.activeGameRoomId) return;
     let emOnline = true;
 
-    const gameRoom = gameRoomsList.get(user.activeGameId);
+    const gameRoom = gameRoomsList.get(user.activeGameRoomId);
     if (!gameRoom) {
       socket.emit('error', 'Game Room not found');
       return;
@@ -426,42 +430,42 @@ io.on('connection', (socket) => {
     }
 
     const heroesRemaining = Array.from(gameRoom.heroes).map(memberId => users.get(memberId)?.username);
-    io.to(user.activeGameId).emit('gameRoom_members_updated', { gameRoomId: user.activeGameId, members: heroesRemaining });
+    io.to(user.activeGameRoomId).emit('gameRoom_members_updated', { gameRoomId: user.activeGameRoomId, members: heroesRemaining });
 
     if (gameRoom.heroes.size === 0) {
-      gameRoomsList.delete(user.activeGameId);
-      socket.leave(user.activeGameId);
-      user.activeGameId = null;
+      gameRoomsList.delete(user.activeGameRoomId);
+      socket.leave(user.activeGameRoomId);
+      user.activeGameRoomId = null;
     }
     
   });
 
   socket.on('change_game_mode', (data) => {
     const user = users.get(socket.id);
-    if (!user || !user.activeGameId) {
+    if (!user || !user.activeGameRoomId) {
       socket.emit('error', 'Not in a Game Room');
       return;
     }
 
-    const gameRoom = gameRoomsList.get(user.activeGameId);
+    const gameRoom = gameRoomsList.get(user.activeGameRoomId);
     if (!gameRoom) {
       socket.emit('error', 'Game Room not found');
       return;
     }
 
     gameRoom.gameMode = data.mode;
-    io.to(user.activeGameId).emit('game_mode_changed', { mode: data.mode });
+    io.to(user.activeGameRoomId).emit('game_mode_changed', { mode: data.mode });
   });
 
   // Disconnect event
   socket.on('disconnect', () => {
     const user = users.get(socket.id);
     if (user) {
-      if (user.activeGameId) {
-        const gameRoom = gameRoomsList.get(user.activeGameId);
+      if (user.activeGameRoomId) {
+        const gameRoom = gameRoomsList.get(user.activeGameRoomId);
         if (gameRoom) {
           if (gameRoom.em.socketId === socket.id) 
-            gameRoomsList.delete(user.activeGameId);
+            gameRoomsList.delete(user.activeGameRoomId);
           else {
             const index = gameRoom.heroes.indexOf(socket.id);
             if (index > -1) { // only splice array when item is found
@@ -469,10 +473,10 @@ io.on('connection', (socket) => {
             }              
           }
           const memberNames = Array.from(gameRoom.heroes).map(memberId => users.get(memberId)?.username);
-          io.to(user.activeGameId).emit('gameRoom_members_updated', { gameRoomId: user.activeGameId, members: memberNames });
+          io.to(user.activeGameRoomId).emit('gameRoom_members_updated', { gameRoomId: user.activeGameRoomId, members: memberNames });
 
           if (gameRoom.heroes.size === 0) {
-            gameRoomsList.delete(user.activeGameId);
+            gameRoomsList.delete(user.activeGameRoomId);
           }
         }
       }

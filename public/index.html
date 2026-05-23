@@ -68,8 +68,14 @@
       </div>
 
       <div class="hope-tracker-bar">
-        <span class="hope-label">Hope:</span>
-        <span class="hope-value" id="hopeTracker">0</span>
+        <div class="tracker-left">
+          <span class="hope-label">Hope:</span>
+          <span class="hope-value" id="hopeTracker">0</span>
+        </div>
+        <div class="tracker-right">
+          <span class="dread-label">Dread:</span>
+          <span class="dread-value" id="dreadTracker">0</span>
+        </div>
       </div>
 
       <div class="gameRoom-content">
@@ -106,6 +112,7 @@
             <button onclick="spendHope()">Spend Hope</button>
             <button onclick="addOneHope()">+1 Hope</button>
             <button onclick="setHope()">Set Hope</button>
+            <button onclick="spendDread()">Spend Dread</button>
           </div>
         </div>
       </div>
