@@ -6,19 +6,19 @@ let currentGameMode = 'combat';
 
 // DOM Elements
 const loginPage = document.getElementById('loginPage');
-const gameRoomsPage = document.getElementById('roomsPage');
-const gameRoomPage = document.getElementById('roomPage');
+const gameRoomsPage = document.getElementById('gameRoomsPage');
+const gameRoomPage = document.getElementById('gameRoomPage');
 const statusEl = document.getElementById('status');
 const errorEl = document.getElementById('error');
 const successEl = document.getElementById('success');
 const usernameInput = document.getElementById('usernameInput');
-const gameRoomNameInput = document.getElementById('roomNameInput');
+const gameRoomNameInput = document.getElementById('gameRoomNameInput');
 const heroNameInput = document.getElementById('heroNameInput');
-const gameRoomsList = document.getElementById('roomsList');
+const gameRoomsList = document.getElementById('gameRoomsList');
 const messageInput = document.getElementById('messageInput');
 const messages = document.getElementById('messages');
 const hopeTracker = document.getElementById('hopeTracker');
-const currentGameRoomName = document.getElementById('currentRoomName');
+const currentGameRoomName = document.getElementById('currentGameRoomName');
 
 // Socket event listeners
 socket.on('connect', () => {
@@ -36,7 +36,7 @@ socket.on('login_success', (data) => {
   currentUser = data;
   showSuccess(`Welcome, ${data.username}!`);
   getGameRooms();
-  showPage('roomsPage');
+  showPage('gameRoomsPage');
   usernameInput.value = '';
 });
 
@@ -53,17 +53,18 @@ socket.on('create:gameRoom', (data) => {
 
 socket.on('join:gameRoom', (data) => {
   currentGameRoom = { gameRoomId: data.gameRoomId, name: data.gameRoomName, members: data.members, emOnline: data.emOnline };
+  console.log('Joined game room:', currentGameRoom);
   hopeTracker.textContent = data.hero.hope;
   showSuccess(`Joined gameRoom "${data.gameRoomName}"`);
   closeHeroNameModal();
-  showPage('roomPage');
+  showPage('gameRoomPage');
   messages.innerHTML = '';
-  updateRoomHeader();
+  updateGameRoomHeader();
 });
 
 socket.on('player_joined', (data) => {
   if (currentGameRoom && currentGameRoom.gameRoomId === data.gameRoomId) {
-    showPage('roomPage');
+    showPage('gameRoomPage');
     messages.innerHTML = '';
     updateGameRoomHeader();
   }
@@ -77,7 +78,7 @@ socket.on('gameRoom_members_updated', (data) => {
   }
 });
 
-socket.on('gameRooms_list', (gameRoomsList_data) => {
+socket.on('list:gameRooms', (gameRoomsList_data) => {
   displayGameRooms(gameRoomsList_data);
 });
 
@@ -175,8 +176,8 @@ socket.on('game_mode_changed', (data) => {
 // Functions
 function showPage(pageName) {
   loginPage.style.display = pageName === 'loginPage' ? 'flex' : 'none';
-  gameRoomsPage.style.display = pageName === 'roomsPage' ? 'flex' : 'none';
-  gameRoomPage.style.display = pageName === 'roomPage' ? 'flex' : 'none';
+  gameRoomsPage.style.display = pageName === 'gameRoomsPage' ? 'flex' : 'none';
+  gameRoomPage.style.display = pageName === 'gameRoomPage' ? 'flex' : 'none';
 }
 
 function login() {
@@ -212,7 +213,7 @@ function createGameRoom() {
   gameRoomNameInput.value = '';
 }
 
-function joinRoom(gameRoomId) {
+function joinGameRoom(gameRoomId) {
   if (!currentUser) {
     showError('An error occurred. Please refresh the page and login again.');
     return;
@@ -267,7 +268,7 @@ function leaveGameRoom() {
   socket.emit('leave:gameRoom');
   currentGameRoom = null;
   getGameRooms();
-  showPage('roomsPage');
+  showPage('gameRoomsPage');
 }
 
 function toggleGameMode() {
@@ -309,11 +310,11 @@ function displayGameRooms(gameRoomsList_data) {
   console.log('Updating game rooms list with data:', gameRoomsList_data);
 
   gameRoomsList.innerHTML = gameRoomsList_data.map(gameRoom => `
-    <div class="room-item">
-      <div class="room-item-name">${escapeHtml(gameRoom.name)}</div>
-      <div class="room-item-info">EM: ${escapeHtml(gameRoom.em.username)}</div>
-      <div class="room-item-members">Players (${gameRoom.playerCount}): ${gameRoom.players ? gameRoom.players.join(', ') : '-'}</div>
-      <button class="room-item-button" onclick="joinGameRoom('${gameRoom.gameId}')">Join as Player</button>
+    <div class="gameRoom-item">
+      <div class="gameRoom-item-name">${escapeHtml(gameRoom.name)}</div>
+      <div class="gameRoom-item-info">EM: ${escapeHtml(gameRoom.em.username)}</div>
+      <div class="gameRoom-item-members">Players (${gameRoom.playerCount}): ${gameRoom.players ? gameRoom.players.join(', ') : '-'}</div>
+      <button class="gameRoom-item-button" onclick="joinGameRoom('${gameRoom.gameRoomId}')">Join as Player</button>
     </div>
   `).join('');
 }

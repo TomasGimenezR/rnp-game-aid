@@ -2,9 +2,9 @@ function getRandomInt() {
     return Math.floor(Math.random() * 6) + 1;
 }
 
-class Game {
-    constructor(gameId, gameName, em) {
-        this.gameId = gameId;
+class GameRoom {
+    constructor(gameRoomId, gameName, em) {
+        this.gameRoomId = gameRoomId;
         this.name = gameName;
         this.em = em;
         this.heroes = [];
@@ -191,4 +191,4 @@ class Hero {
 
 }
 
-export { Hero, Game };
+export { Hero, GameRoom };
