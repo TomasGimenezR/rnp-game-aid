@@ -65,22 +65,22 @@ io.on('connection', (socket) => {
       return;
     }
 
-    const gameRoomId = `room_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const gameRoomId = `gameRoom_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const gameRoom = new Game(gameRoomId, gameName, user);
 
     gameList.set(gameRoomId, gameRoom);
     user.activeGameId = gameRoomId;
 
     socket.join(gameRoomId);
-    socket.emit('room_created', { roomId: gameRoomId, gameName, members: [user.username], emOnline: true });
-    const roomListData = Array.from(gameList.values()).map(gameRoom => ({
+    socket.emit('gameRoom_created', { gameRoomId, gameName, members: [user.username], emOnline: true });
+    const gameRoomListData = Array.from(gameList.values()).map(gameRoom => ({
       gameId: gameRoom.gameId,
       name: gameRoom.name,
       em: gameRoom.em,
       playerCount: gameRoom.heroes.length,
       players: gameRoom.heroes.map(heroUser => heroUser.username)
     }));
-    io.emit('room_list_updated', roomListData);
+    io.emit('gameRoom_list_updated', gameRoomListData);
 
     console.log(`🏠 Game Room created: ${gameName} (${gameRoomId}) by ${user.username}`);
   });
@@ -103,10 +103,10 @@ io.on('connection', (socket) => {
     // Leave previous gameRoom if in one
     if (user.activeGameId) {
         socket.leave(user.activeGameId);
-        const prevRoom = gameList.get(user.activeGameId);
-        if (prevRoom) {
-            prevRoom.members.delete(socket.id);
-            if (prevRoom.members.size === 0) {
+        const prevGameRoom = gameList.get(user.activeGameId);
+        if (prevGameRoom) {
+            prevGameRoom.members.delete(socket.id);
+            if (prevGameRoom.members.size === 0) {
                 gameList.delete(user.activeGameId);
             }
         }
@@ -146,7 +146,7 @@ io.on('connection', (socket) => {
       playerCount: gameRoom.heroes.length,
       players: gameRoom.heroes.map(heroUser => heroUser.username)
     }));
-    socket.emit('rooms_list', gameRoomsList);
+    socket.emit('list:gameRooms', gameRoomsList);
   });
 
   socket.on('action_roll', () => {
@@ -388,8 +388,8 @@ io.on('connection', (socket) => {
       return;
     }
 
-    const room = gameList.get(user.activeGameId);
-    if (!room) {
+    const gameRoom = gameList.get(user.activeGameId);
+    if (!gameRoom) {
       socket.emit('error', 'Game Room not found');
       return;
     }
@@ -423,7 +423,7 @@ io.on('connection', (socket) => {
     }
 
     const heroesRemaining = Array.from(gameRoom.heroes).map(memberId => users.get(memberId)?.username);
-    io.to(user.activeGameId).emit('room_members_updated', { roomId: user.activeGameId, members: heroesRemaining });
+    io.to(user.activeGameId).emit('gameRoom_members_updated', { gameRoomId: user.activeGameId, members: heroesRemaining });
 
     if (gameRoom.heroes.size === 0) {
       gameList.delete(user.activeGameId);
@@ -436,7 +436,7 @@ io.on('connection', (socket) => {
   socket.on('change_game_mode', (data) => {
     const user = users.get(socket.id);
     if (!user || !user.activeGameId) {
-      socket.emit('error', 'Not in a room');
+      socket.emit('error', 'Not in a Game Room');
       return;
     }
 
@@ -462,7 +462,7 @@ io.on('connection', (socket) => {
           else
             gameRoom.heroes.delete(socket.id);
           const memberNames = Array.from(gameRoom.heroes).map(memberId => users.get(memberId)?.username);
-          io.to(user.activeGameId).emit('room_members_updated', { roomId: user.activeGameId, members: memberNames });
+          io.to(user.activeGameId).emit('gameRoom_members_updated', { gameRoomId: user.activeGameId, members: memberNames });
 
           if (gameRoom.heroes.size === 0) {
             gameList.delete(user.activeGameId);

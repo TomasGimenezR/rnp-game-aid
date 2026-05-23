@@ -47,7 +47,7 @@ socket.on('login_error', (error) => {
 socket.on('create:gameRoom', (data) => {
   currentGameRoom = { gameRoomId: data.gameRoomId, name: data.gameRoomName, members: data.members, emOnline: data.emOnline };
   showSuccess(`Game Room "${data.gameRoomName}" created!`);
-  closeCreateRoomModal();
+  closeCreateGameRoomModal();
   getGameRooms();
 });
 
