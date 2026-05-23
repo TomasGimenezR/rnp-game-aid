@@ -101,8 +101,9 @@ socket.on('new_message', (data) => {
 });
 
 socket.on('action_roll_result', (data) => {
-  const { text } = data;
+  const { text, madeAnEscape } = data;
   let { hero } = data;
+  console.log('Made an Escape:', madeAnEscape);
   if (hero == null)
     hero = { name: 'Unknown Hero' };
   const messageEl = document.createElement('div');
@@ -110,6 +111,7 @@ socket.on('action_roll_result', (data) => {
   messageEl.innerHTML = `
     <div class="message-heroname">${escapeHtml(hero.name)}</div>
     <div class="message-text"><strong>Action Roll Results:</strong> ${text}</div>
+    ${madeAnEscape ? '<div class="message-escape"><em> Made an Escape! </em></div>' : ''}
   `;
   messages.appendChild(messageEl);
   messages.scrollTop = messages.scrollHeight;

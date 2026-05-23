@@ -166,7 +166,7 @@ io.on('connection', (socket) => {
 
     const rollResults = hero.actionRoll();
     const text = ` ${rollResults.heroDiceResults.join(' ')} ${rollResults.redDiceResults.join(' ')} ${rollResults.blackDiceResults.join(' ')}</br>Suns: ${rollResults.suns}</br>Skulls: ${rollResults.skulls}`;
-    io.to(user.activeGameId).emit('action_roll_result', { text, hero });
+    io.to(user.activeGameId).emit('action_roll_result', { text, hero, madeAnEscape: rollResults.madeAnEscape });
     io.to(socket.id).emit('show:hope', { hero }); // Update Hope just for player rolling
   });
 

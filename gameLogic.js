@@ -124,8 +124,13 @@ class Hero {
     // Perform an Action Roll, adding one Hero Die to the pool
     actionRoll = () => {
         this.dicePool.hero++;
-        const diceResults = this.rollDice();
+        let madeAnEscape = false;
+        let diceResults = this.rollDice();
         this.hope += diceResults.suns;
+        if (diceResults.skulls == 0) 
+            madeAnEscape = true;
+        
+        diceResults.madeAnEscape = madeAnEscape;
         return diceResults;
     }
 
