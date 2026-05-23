@@ -53,7 +53,6 @@ socket.on('create:gameRoom', (data) => {
 
 socket.on('join:gameRoom', (data) => {
   currentGameRoom = { gameRoomId: data.gameRoomId, name: data.gameRoomName, members: data.members, emOnline: data.emOnline };
-  console.log('Joined game room:', currentGameRoom);
   hopeTracker.textContent = data.hero.hope;
   showSuccess(`Joined gameRoom "${data.gameRoomName}"`);
   closeHeroNameModal();
@@ -306,8 +305,6 @@ function displayGameRooms(gameRoomsList_data) {
     gameRoomsList.innerHTML = '<p style="color: #999; text-align: center; grid-column: 1/-1;">No game rooms available</p>';
     return;
   }
-
-  console.log('Updating game rooms list with data:', gameRoomsList_data);
 
   gameRoomsList.innerHTML = gameRoomsList_data.map(gameRoom => `
     <div class="gameRoom-item">

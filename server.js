@@ -30,7 +30,7 @@ const gameRoomsList = new Map(); // gameId -> { name, creator, members: Set, gam
 
 // Socket.io connection handling
 io.on('connection', (socket) => {
-  console.log(`User connected: ${socket.id}`);
+  console.log(`🌐 User connected: ${socket.id}`);
 
   // Login event
   socket.on('login', (username) => {
@@ -48,7 +48,7 @@ io.on('connection', (socket) => {
 
     users.set(socket.id, { username, socketId: socket.id, activeGameId: null });
     socket.emit('login_success', { userId: socket.id, username });
-    console.log(`User logged in: ${username}`);
+    console.log(`✅ User logged in: ${username}`);
   });
 
   // Create gameRoom event
@@ -72,7 +72,7 @@ io.on('connection', (socket) => {
     user.activeGameId = gameRoomId;
 
     socket.join(gameRoomId);
-    socket.emit('gameRoom_created', { gameRoomId, gameRoomName: gameRoom.name, members: [user.username], emOnline: true });
+    socket.emit('create:gameRoom', { gameRoomId, gameRoomName: gameRoom.name, members: [user.username], emOnline: true });
     const gameRoomsInfo = Array.from(gameRoomsList.values()).map(gameRoom => ({
       gameRoomId: gameRoom.gameRoomId,
       name: gameRoom.name,
@@ -80,7 +80,6 @@ io.on('connection', (socket) => {
       playerCount: gameRoom.heroes.length,
       players: gameRoom.heroes.map(heroUser => heroUser.username)
     }));
-    console.log('The game rooms list right now in create:gameRoom is', gameRoomsList);
     io.emit('gameRoom_list_updated', gameRoomsInfo);
 
     console.log(`🏠 Game Room created: ${gameName} (${gameRoomId}) by ${user.username}`);
@@ -129,7 +128,7 @@ io.on('connection', (socket) => {
     let emOnline = false;
     const emSocket = io.sockets.sockets.get(gameRoom.em.socketId);
     if (emSocket) emOnline = true;
-    if (emOnline &&gameRoom.heroes.length == 1) { 
+    if (emOnline && gameRoom.heroes.length == 1) { 
       emSocket.join(gameRoomId);
       io.to(gameRoomId).emit('player_joined',{ gameRoomId });
     }
@@ -143,7 +142,6 @@ io.on('connection', (socket) => {
 
   // Get gameRoomsList
   socket.on('get:gameRooms', () => {
-    console.log('The game rooms list right now in get:gameRooms is', gameRoomsList);
     const gameRoomsInfo = Array.from(gameRoomsList.values()).map(gameRoom => ({
       gameRoomId: gameRoom.gameRoomId,
       name: gameRoom.name,
@@ -478,12 +476,12 @@ io.on('connection', (socket) => {
           }
         }
       }
-      console.log(`User disconnected: ${user.username}`);
+      console.log(`📤 User disconnected: ${user.username}`);
       users.delete(socket.id);
     }
   });
 });
 
 httpServer.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
+  console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
