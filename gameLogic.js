@@ -2,12 +2,15 @@ function getRandomInt() {
     return Math.floor(Math.random() * 6) + 1;
 }
 
-class Game {
-    constructor(roomId, em) {
-        this.roomId = roomId;
+class GameRoom {
+    constructor(gameRoomId, gameName, em) {
+        this.gameRoomId = gameRoomId;
+        this.name = gameName;
         this.em = em;
         this.heroes = [];
         this.dread = 0;
+        this.createdAt = new Date();
+        this.gameState = 'Downtime';
     }
 
     addHero(hero) {
@@ -31,7 +34,7 @@ class Hero {
         this.hope = 0;
         this.qualities = [];
         this.dicePool = {
-            hero: 0,
+            hero: 2,
             red: 0,
             black: 0,
         };
@@ -126,12 +129,8 @@ class Hero {
         return diceResults;
     }
 
-    resetDicePool = () => {
-        this.dicePool = {
-            hero: 0,
-            red: 0,
-            black: 0,
-        };
+    setDicePool = (dicePool) => {
+        this.dicePool = dicePool;
     }
     
     replaceForRedDie = () => {
@@ -155,9 +154,31 @@ class Hero {
         return this.dicePool;
     }
 
+    subtractRedDie = () => {
+        if (this.dicePool.red > 0) {
+            this.dicePool.red--;
+        }
+        return this.dicePool;
+    }
+
     addBlackDie = () => {
         this.dicePool.black++;
         return this.dicePool;
+    }
+
+    subtractBlackDie = () => {
+        if (this.dicePool.black > 0) {
+            this.dicePool.black--;
+        }
+        return this.dicePool;
+    }
+
+    setHope = (amount) => {
+        if (amount < 0) {
+            throw new Error('Hope cannot be negative');
+        }
+        this.hope = amount;
+        return this.hope;
     }
 
     spendHope = (amount) => {
@@ -170,4 +191,4 @@ class Hero {
 
 }
 
-export { Hero, Game };
+export { Hero, GameRoom };

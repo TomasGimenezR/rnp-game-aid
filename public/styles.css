@@ -1,403 +1,806 @@
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
-    #rnp-logo {
-      width: 20%;
-    }
+:root {
+  --dusk-blue: #395277;
+  --pacific-blue: #62AEBA;
+  --blazing-flame: #FF3700;
+  --black: #000000;
+  --white: #FFFFFF;
+  --text-color: #000000;
+  --light-gray: #f5f5f5;
+}
 
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-    }
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, var(--dusk-blue) 0%, var(--pacific-blue) 100%);
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  color: var(--text-color);
+}
 
-    .container {
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-      max-width: 900px;
-      width: 100%;
-      padding: 30px;
-    }
+.alerts {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 
-    .game-actions div {
-      display: flex;
-      justify-content: center;
-      padding: 0.1em;
-    }
+.error, .success {
+  padding: 12px 20px;
+  border-radius: 4px;
+  font-weight: 600;
+  display: none;
+  animation: slideIn 0.3s ease-out;
+}
 
-    .game-actions div {
-      margin: 0.2em;
-    }
-    
-    .game-actions div .orange-btn {
-      background-color: #f0a031;
-    }
+.error {
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+}
 
-    .game-actions div button {
-      background-color: #ff7878;
-      border-width: medium;
-      padding: 0.2em;
-      margin-left: 0.4em;
-    }
+.success {
+  background: #d4edda;
+  border: 1px solid #c3e6cb;
+  color: #155724;
+}
 
-    .header {
-      text-align: center;
-      margin-bottom: 30px;
-    }
+.error.show, .success.show {
+  display: block;
+}
 
-    .header h1 {
-      color: #333;
-      margin-bottom: 10px;
-    }
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
 
-    .status {
-      font-size: 14px;
-      color: #666;
-    }
+/* Page Navigation */
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
 
-    .status.connected {
-      color: #4CAF50;
-    }
+.container {
+  background: var(--white);
+  border-radius: 10px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  padding: 30px;
+}
 
-    .login-section {
-      margin-bottom: 30px;
-      padding: 20px;
-      background: #f5f5f5;
-      border-radius: 8px;
-    }
+/* Login Page */
+.login-container {
+  max-width: 500px;
+  padding: 40px 30px;
+}
 
-    .login-section h2 {
-      color: #333;
-      margin-bottom: 15px;
-      font-size: 18px;
-    }
+/* Rooms Page */
+.gameRooms-container {
+  max-width: 1200px;
+  padding: 30px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
 
-    .input-group {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
+.gameRooms-section {
+  width: 100%;
+}
 
-    .input-group input {
-      flex: 1;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      font-size: 14px;
-    }
+.gameRooms-section h2 {
+  color: var(--text-color);
+  margin-bottom: 20px;
+  font-size: 28px;
+}
 
-    .input-group button {
-      padding: 10px 20px;
-      background: #667eea;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 600;
-      transition: background 0.3s;
-    }
+.create-gameRoom-btn {
+  padding: 12px 24px;
+  background: var(--blazing-flame);
+  color: var(--white);
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 30px;
+  transition: all 0.3s;
+}
 
-    .input-group button:hover {
-      background: #5568d3;
-    }
+.create-gameRoom-btn:hover {
+  background: #e63100;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 55, 0, 0.3);
+}
 
-    .input-group button:disabled {
-      background: #ccc;
-      cursor: not-allowed;
-    }
+.gameRooms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
 
-    .main-content {
-      display: none;
-      grid-template-columns: 1fr 1fr;
-      gap: 30px;
-    }
+/* Room Page */
+.gameRoom-container {
+  display: flex;
+  flex-direction: column;
+  background: var(--white);
+  border-radius: 10px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  max-height: 90vh;
+  overflow: hidden;
+}
 
-    .main-content.active {
-      display: grid;
-    }
+.gameRoom-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 30px;
+  border-bottom: 3px solid var(--blazing-flame);
+  background: var(--white);
+  gap: 20px;
+}
 
-    .section {
-      padding: 20px;
-      background: #f5f5f5;
-      border-radius: 8px;
-    }
+.gameRoom-header-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
 
-    .section h2 {
-      color: #333;
-      margin-bottom: 10px;
-      font-size: 18px;
-    }
+.gameRoom-title {
+  color: var(--text-color);
+  margin: 0;
+  font-size: 32px;
+  font-weight: 700;
+}
 
-    .section h3 {
-      color: #555;
-      margin-top: 15px;
-      margin-bottom: 10px;
-      font-size: 14px;
-    }
+.game-mode-indicator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+}
 
-    .create-room {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
+.mode-label {
+  color: #666;
+}
 
-    .create-room input {
-      flex: 1;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      font-size: 14px;
-    }
+.mode-value {
+  padding: 4px 12px;
+  border-radius: 20px;
+  background: var(--dusk-blue);
+  color: var(--white);
+  font-weight: 700;
+}
 
-    .create-room button {
-      padding: 10px 15px;
-      background: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 600;
-      transition: background 0.3s;
-    }
+.em-status {
+  padding: 4px 12px;
+  border-radius: 20px;
+  background: #ff6b6b;
+  color: var(--white);
+  font-weight: 700;
+  font-size: 12px;
+}
 
-    .create-room button:hover {
-      background: #45a049;
-    }
 
-    .rooms-list {
-      max-height: 300px;
-      overflow-y: auto;
-    }
+.mode-value.downtime {
+  background: var(--pacific-blue);
+}
 
-    .room-item {
-      padding: 12px;
-      background: white;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      margin-bottom: 10px;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
+.leave-button {
+  padding: 10px 20px;
+  background: var(--blazing-flame);
+  color: var(--white);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: all 0.3s;
+  white-space: nowrap;
+}
 
-    .room-item:hover {
-      background: #f0f0f0;
-      border-color: #667eea;
-    }
+.leave-button:hover {
+  background: #e63100;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 55, 0, 0.3);
+}
 
-    .room-item-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-    }
+.mode-toggle-btn {
+  padding: 10px 20px;
+  background: var(--pacific-blue);
+  color: var(--white);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s;
+  white-space: nowrap;
+}
 
-    .room-item-name {
-      font-weight: 600;
-      color: #333;
-    }
+.mode-toggle-btn:hover {
+  background: #4a95a3;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(98, 174, 186, 0.3);
+}
 
-    .room-item-info {
-      font-size: 12px;
-      color: #666;
-      margin-bottom: 8px;
-    }
+/* Hope Tracker Bar */
+.hope-tracker-bar {
+  background: black;
+  padding: 15px 30px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  font-size: 20px;
+  font-weight: 700;
+}
 
-    .room-item-members {
-      font-size: 12px;
-      color: #888;
-      margin-bottom: 8px;
-    }
+.hope-label {
+  color: var(--white);
+}
 
-    .room-item-button {
-      padding: 6px 12px;
-      background: #667eea;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 12px;
-      transition: background 0.3s;
-    }
+.hope-value {
+  color: var(--blazing-flame);
+  font-size: 28px;
+}
 
-    .room-item-button:hover {
-      background: #5568d3;
-    }
+/* Room Content */
+.gameRoom-content {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 20px;
+  padding: 20px 30px;
+  flex: 1;
+  overflow: hidden;
+}
 
-    .current-room {
-      padding-right: 15px;
-      padding-left: 15px;
-      padding-top: 15px;
-      background: white;
-      border: 2px solid #667eea;
-      border-radius: 8px;
-      margin-bottom: 12px;
-    }
+.chat-section {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
 
-    .current-room-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 15px;
-    }
+.chat-section h3 {
+  color: var(--text-color);
+  margin-bottom: 15px;
+  font-size: 18px;
+}
 
-    .current-room-name {
-      font-size: 18px;
-      font-weight: 600;
-      color: #333;
-    }
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--light-gray);
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: 15px;
+}
 
-    .leave-button {
-      padding: 8px 15px;
-      background: #ff6b6b;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-      transition: background 0.3s;
-    }
+.message {
+  margin-bottom: 12px;
+  padding: 10px;
+  background: var(--white);
+  border-left: 4px solid var(--blazing-flame);
+  border-radius: 4px;
+  font-size: 14px;
+}
 
-    .leave-button:hover {
-      background: #ff5252;
-    }
+.message-heroname {
+  font-weight: 600;
+  color: var(--dusk-blue);
+  margin-bottom: 4px;
+  font-size: 13px;
+}
 
-    .room-members {
-      margin-bottom: 15px;
-      padding: 10px;
-      background: #f9f9f9;
-      border-radius: 4px;
-    }
+.message-text {
+  color: var(--text-color);
+  line-height: 1.4;
+}
 
-    .room-members-label {
-      font-size: 12px;
-      color: #666;
-      font-weight: 600;
-      margin-bottom: 5px;
-    }
+.message-time {
+  font-size: 11px;
+  color: #999;
+  margin-top: 4px;
+}
 
-    .room-members-list {
-      font-size: 14px;
-      color: #333;
-    }
+.message-input {
+  display: flex;
+  gap: 10px;
+}
 
-    .chat-area {
-      display: flex;
-      flex-direction: column;
-      height: 300px;
-    }
+.message-input input {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  background: var(--white);
+}
 
-    .messages {
-      flex: 1;
-      overflow-y: auto;
-      background: white;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      padding: 10px;
-      margin-bottom: 10px;
-    }
+.message-input button {
+  padding: 12px 24px;
+  background: var(--dusk-blue);
+  color: var(--white);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+}
 
-    .message {
-      margin-bottom: 10px;
-      padding: 8px;
-      background: #f0f0f0;
-      border-radius: 4px;
-      font-size: 13px;
-    }
+.message-input button:hover {
+  background: var(--pacific-blue);
+}
 
-    .message-username {
-      font-weight: 600;
-      color: #667eea;
-      margin-bottom: 3px;
-    }
+/* Actions Section */
+.actions-section {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 20px;
+  background: var(--light-gray);
+  border-radius: 6px;
+  overflow-y: auto;
+  max-height: 100%;
+}
 
-    .message-text {
-      color: #333;
-      font-family:noto
-    }
+.action-group {
+  display: contents;
+}
 
-    .message-time {
-      font-size: 11px;
-      color: #999;
-      margin-top: 3px;
-    }
+.action-group h4 {
+  grid-column: 1 / -1;
+  color: var(--dusk-blue);
+  margin: 0;
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
 
-    .message-input {
-      display: flex;
-      gap: 10px;
-    }
+.action-group h4:first-child {
+  margin-top: 0;
+}
 
-    .message-input input {
-      flex: 1;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 14px;
-    }
+.action-group button {
+  padding: 10px 8px;
+  background: var(--white);
+  color: var(--text-color);
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  transition: all 0.2s;
+  text-align: center;
+  line-height: 1.2;
+}
 
-    .message-input button {
-      padding: 10px 15px;
-      background: #667eea;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: background 0.3s;
-    }
+.action-group button:hover {
+  border-color: var(--blazing-flame);
+  background: #fff;
+}
 
-    .message-input button:hover {
-      background: #5568d3;
-    }
+.primary-btn {
+  background: var(--dusk-blue) !important;
+  color: var(--white) !important;
+  border: none !important;
+}
 
-    .no-room {
-      padding: 20px;
-      background: #fff3cd;
-      border: 1px solid #ffc107;
-      border-radius: 4px;
-      color: #856404;
-      text-align: center;
-    }
+.primary-btn:hover {
+  background: var(--pacific-blue) !important;
+}
 
-    .error {
-      padding: 12px;
-      background: #f8d7da;
-      border: 1px solid #f5c6cb;
-      border-radius: 4px;
-      color: #721c24;
-      margin-bottom: 10px;
-      display: none;
-    }
+.accent-btn {
+  background: var(--blazing-flame) !important;
+  color: var(--white) !important;
+  border: none !important;
+}
 
-    .error.show {
-      display: block;
-    }
+.accent-btn:hover {
+  background: #e63100 !important;
+}
 
-    .success {
-      padding: 12px;
-      background: #d4edda;
-      border: 1px solid #c3e6cb;
-      border-radius: 4px;
-      color: #155724;
-      margin-bottom: 10px;
-      display: none;
-    }
+/* Shared Styles */
+.header {
+  text-align: center;
+  margin-bottom: 30px;
+}
 
-    .success.show {
-      display: block;
-    }
+.header h1 {
+  color: var(--text-color);
+  margin-bottom: 10px;
+  font-size: 24px;
+}
 
-    @media (max-width: 768px) {
-      .main-content {
-        grid-template-columns: 1fr;
-      }
-    }
+#rnp-logo {
+  width: 15%;
+  max-width: 120px;
+  margin-bottom: 10px;
+}
+
+.status {
+  font-size: 14px;
+  color: #666;
+}
+
+.status.connected {
+  color: #4CAF50;
+}
+
+/* Login Section */
+.login-section {
+  margin-bottom: 30px;
+}
+
+.login-section h2 {
+  color: var(--text-color);
+  margin-bottom: 20px;
+  font-size: 22px;
+}
+
+.input-group {
+  display: flex;
+  gap: 10px;
+}
+
+.input-group input {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  background: var(--white);
+}
+
+.input-group button {
+  padding: 12px 24px;
+  background: var(--dusk-blue);
+  color: var(--white);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.input-group button:hover {
+  background: var(--pacific-blue);
+}
+
+/* Room Items */
+.gameRoom-item {
+  padding: 20px;
+  background: var(--white);
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.gameRoom-item:hover {
+  border-color: var(--blazing-flame);
+  box-shadow: 0 4px 12px rgba(255, 55, 0, 0.2);
+}
+
+.gameRoom-item-name {
+  font-weight: 700;
+  color: var(--text-color);
+  font-size: 16px;
+}
+
+.gameRoom-item-info {
+  font-size: 13px;
+  color: #666;
+}
+
+.gameRoom-item-members {
+  font-size: 12px;
+  color: #999;
+}
+
+.gameRoom-item-button {
+  padding: 10px;
+  background: var(--blazing-flame);
+  color: var(--white);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.gameRoom-item-button:hover {
+  background: #e63100;
+}
+
+/* Modal */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  justify-content: center;
+  align-items: center;
+}
+
+.modal.show {
+  display: flex;
+}
+
+.modal-content {
+  background-color: var(--white);
+  padding: 0;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  padding: 20px;
+  border-bottom: 2px solid var(--blazing-flame);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: var(--text-color);
+  font-size: 20px;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+  color: #999;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-close:hover {
+  color: var(--text-color);
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.modal-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.modal-body p {
+  color: var(--text-color);
+  line-height: 1.6;
+}
+
+.dice-input-group {
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dice-input-group label {
+  min-width: 150px;
+  font-weight: 600;
+  color: var(--text-color);
+  font-size: 14px;
+}
+
+.dice-input-group input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.modal-footer {
+  padding: 20px;
+  border-top: 1px solid #ddd;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.modal-btn-cancel {
+  padding: 10px 20px;
+  background: #999;
+  color: var(--white);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.3s;
+}
+
+.modal-btn-cancel:hover {
+  background: #777;
+}
+
+.modal-btn-submit {
+  padding: 10px 20px;
+  background: var(--blazing-flame);
+  color: var(--white);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.modal-btn-submit:hover {
+  background: #e63100;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .gameRoom-content {
+    grid-template-columns: 1fr;
+  }
+
+  .actions-section {
+    max-height: 300px;
+  }
+}
+
+@media (max-width: 768px) {
+  .gameRoom-header {
+    flex-direction: column;
+    padding: 15px;
+  }
+
+  .gameRoom-header-center {
+    order: 2;
+  }
+
+  .gameRoom-title {
+    font-size: 24px;
+  }
+
+  .leave-button {
+    order: 1;
+    align-self: flex-start;
+  }
+
+  .mode-toggle-btn {
+    order: 3;
+    align-self: flex-start;
+  }
+
+  .hope-tracker-bar {
+    padding: 12px 15px;
+    font-size: 16px;
+  }
+
+  .gameRoom-content {
+    padding: 15px;
+  }
+
+  .login-container, .gameRooms-container {
+    max-width: 95%;
+    padding: 20px;
+  }
+
+  .gameRooms-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .message-input {
+    flex-direction: column;
+  }
+
+  .message-input input {
+    margin-bottom: 10px;
+  }
+
+  .action-group button {
+    font-size: 11px;
+    padding: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .gameRoom-header {
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .gameRoom-header-center {
+    order: 2;
+    width: 100%;
+  }
+
+  .gameRoom-title {
+    font-size: 18px;
+  }
+
+  .game-mode-indicator {
+    font-size: 12px;
+    gap: 6px;
+  }
+
+  .mode-value {
+    padding: 3px 8px;
+    font-size: 11px;
+  }
+
+  .leave-button {
+    order: 1;
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  .mode-toggle-btn {
+    order: 3;
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  .hope-tracker-bar {
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .hope-value {
+    font-size: 24px;
+  }
+
+  .gameRoom-content {
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .actions-section {
+    padding: 10px;
+    gap: 10px;
+  }
+}
