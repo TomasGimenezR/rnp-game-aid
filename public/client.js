@@ -190,12 +190,12 @@ function login() {
 
 function openCreateGameRoomModal() {
   document.getElementById('createRoomModal').classList.add('show');
-  document.getElementById('roomNameInput').focus();
+  document.getElementById('gameRoomNameInput').focus();
 }
 
 function closeCreateGameRoomModal() {
   document.getElementById('createRoomModal').classList.remove('show');
-  document.getElementById('roomNameInput').value = '';
+  document.getElementById('gameRoomNameInput').value = '';
 }
 
 function createGameRoom() {
@@ -203,13 +203,13 @@ function createGameRoom() {
     showError('An error occurred. Please refresh the page and login again.');
     return;
   }
-  const gameRoomName = roomNameInput.value.trim();
+  const gameRoomName = gameRoomNameInput.value.trim();
   if (!gameRoomName) {
     showError('Please enter a game room name');
     return;
   }
   socket.emit('create:gameRoom', { gameName: gameRoomName });
-  roomNameInput.value = '';
+  gameRoomNameInput.value = '';
 }
 
 function joinRoom(gameRoomId) {
@@ -229,7 +229,7 @@ function confirmHeroName() {
     return;
   }
   if (!pendingGameRoomJoin) {
-    showError('Error: No room selected');
+    showError('Error: No game room selected');
     return;
   }
 
@@ -302,23 +302,23 @@ function getGameRooms() {
 
 function displayGameRooms(gameRoomsList_data) {
   if (gameRoomsList_data.length === 0) {
-    roomsList.innerHTML = '<p style="color: #999; text-align: center; grid-column: 1/-1;">No game rooms available</p>';
+    gameRoomsList.innerHTML = '<p style="color: #999; text-align: center; grid-column: 1/-1;">No game rooms available</p>';
     return;
   }
 
   console.log('Updating game rooms list with data:', gameRoomsList_data);
 
-  roomsList.innerHTML = gameRoomsList_data.map(gameRoom => `
+  gameRoomsList.innerHTML = gameRoomsList_data.map(gameRoom => `
     <div class="room-item">
       <div class="room-item-name">${escapeHtml(gameRoom.name)}</div>
       <div class="room-item-info">EM: ${escapeHtml(gameRoom.em.username)}</div>
       <div class="room-item-members">Players (${gameRoom.playerCount}): ${gameRoom.players ? gameRoom.players.join(', ') : '-'}</div>
-      <button class="room-item-button" onclick="joinRoom('${gameRoom.gameId}')">Join as Player</button>
+      <button class="room-item-button" onclick="joinGameRoom('${gameRoom.gameId}')">Join as Player</button>
     </div>
   `).join('');
 }
 
-function updateRoomHeader() {
+function updateGameRoomHeader() {
   if (currentGameRoom) {
     currentRoomName.textContent = currentGameRoom.name;
     const emStatusEl = document.getElementById('emStatus');
