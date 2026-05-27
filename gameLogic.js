@@ -17,11 +17,11 @@ class GameRoom {
         this.heroes.push(hero);
     }
 
-    spendDread = (amount) => {
-        if (amount > this.dread) {
+    alterDread = (amount) => {
+        if (amount < 0 && Math.abs(amount) > this.dread) {
             throw new Error('Not enough Dread to spend');
         }
-        this.dread -= amount;
+        this.dread += amount;
         return this.dread;
     }
 }

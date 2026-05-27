@@ -130,7 +130,7 @@ socket.on('update:hero', (data) => {
 });
 
 socket.on('update:currencies', (data) => {
-  const { hero, dread } = data;
+  const { hero, dread, buzz } = data;
   if (hero)
     hopeTracker.textContent = hero.hope;
   if (dread)
@@ -139,10 +139,18 @@ socket.on('update:currencies', (data) => {
   messageEl.className = 'message';
   messageEl.innerHTML = `
     <div class="message-heroname">${escapeHtml(hero? hero.name: "EM")}</div>
-    <div class="message-text"><strong>${hero ? 'Spent Hope!' : 'Spent Dread!'}</strong></div>
+    <div class="message-text"><strong>${hero ? 'Spent Hope!' : 'Altered Dread!'}</strong></div>
   `;
   messages.appendChild(messageEl);
   messages.scrollTop = messages.scrollHeight;
+
+  // Buzz screens
+  if (buzz) {
+    gameRoomContainer.classList.add('buzz');
+    setTimeout(() => {
+      gameRoomContainer.classList.remove('buzz');
+    }, 500);
+  } 
 });
 
 socket.on('dice_pool_updated', (data) => {
@@ -179,14 +187,14 @@ socket.on('game_mode_changed', (data) => {
   updateGameMode(mode);
 });
 
-socket.on('update:currencies', (data) => {
-  if (data.dread != null) {
-    gameRoomContainer.classList.add('buzz');
-    setTimeout(() => {
-      gameRoomContainer.classList.remove('buzz');
-    }, 500);
-  }
-});
+// socket.on('update:currencies', (data) => {
+//   if (data.dread != null) {
+//     gameRoomContainer.classList.add('buzz');
+//     setTimeout(() => {
+//       gameRoomContainer.classList.remove('buzz');
+//     }, 500);
+//   }
+// });
 
 // Functions
 function showPage(pageName) {
@@ -429,6 +437,15 @@ function spendDread() {
     return;
   }
   socket.emit('spend:dread', parseInt(dreadSpent));
+}
+
+alterDread = () => {
+  const dreadChange = prompt("Alter Dread by how much? (Enter a number, use negative to reduce)");
+  if (!dreadChange || isNaN(dreadChange)) {
+    showError('Please enter a valid number for Dread alteration');
+    return;
+  }
+  socket.emit('alter:dread', parseInt(dreadChange));
 }
 
 function escapeHtml(text) {

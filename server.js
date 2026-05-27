@@ -364,26 +364,30 @@ io.on('connection', (socket) => {
     io.to(socket.id).emit('update:currencies', { hero });
   });
 
-  socket.on('spend:dread', (dreadSpent) => {
+  socket.on('alter:dread', (dreadChange) => {
     const user = users.get(socket.id);
     const hero = socket.hero;
+    let buzz = false;
     const gameRoom = gameRoomsList.get(user.activeGameRoomId);
     if (!user || !user.activeGameRoomId) {
       socket.emit('error', 'Not in a Game Room');
       return;
     }
     if (hero) {
-        socket.emit('error', 'It is the EM who spend Dread, not the Players!');
+        socket.emit('error', 'It is the EM who alters Dread, not the Players!');
         return;
     }
 
-    if (gameRoom.dread < dreadSpent) {
-      socket.emit('error', 'Not enough Dread to spend');
-      return;
+    if (dreadChange < 0) {
+      buzz = true;
+      if (gameRoom.dread < Math.abs(dreadChange)) {
+        socket.emit('error', 'Not enough Dread to alter');
+        return;
+      }
     }
 
-    gameRoom.spendDread(dreadSpent);
-    io.to(socket.id).emit('update:currencies', { hero, dread: gameRoom.dread });
+    gameRoom.alterDread(dreadChange);
+    io.to(user.activeGameRoomId).emit('update:currencies', { hero, dread: gameRoom.dread, buzz });
   });
 
   // Send message to gameRoom
