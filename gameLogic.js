@@ -3,7 +3,7 @@ function getRandomInt() {
 }
 
 // Roll your dice pool and return the results
-rollDice = (roller) => {
+const rollDice = (roller) => {
     let heroDiceResults = []
     let redDiceResults = []
     let blackDiceResults = []
@@ -72,6 +72,61 @@ rollDice = (roller) => {
     }
 }
 
+const forcedRoll = (roller) => {
+    let success = true;
+    let results = rollDice(roller);
+    
+    if (results.skulls > results.suns) {
+        success = false;
+    }
+    results.success = success;
+    return results;
+}
+
+const setDicePool = (roller, newDicePool) => {
+    roller.dicePool = newDicePool;
+};
+
+const replaceForRedDie = (roller) => {
+    if (roller.dicePool.hero > 0) {
+        roller.dicePool.hero--;
+        roller.dicePool.red++;
+    }
+    return roller.dicePool;
+}
+
+const replaceForBlackDie = (roller) => {
+    if (roller.dicePool.hero > 0) {
+        roller.dicePool.hero--;
+        roller.dicePool.black++;
+    }
+    return roller.dicePool;
+}
+
+const addRedDie = (roller) => {
+    roller.dicePool.red++;
+    return roller.dicePool;
+}
+
+const subtractRedDie = (roller) => {
+    if (roller.dicePool.red > 0) {
+        roller.dicePool.red--;
+    }
+    return roller.dicePool;
+}
+
+const addBlackDie = (roller) => {
+    roller.dicePool.black++;
+    return roller.dicePool;
+}
+
+const subtractBlackDie = (roller) => {
+    if (roller.dicePool.black > 0) {
+        roller.dicePool.black--;
+    }
+    return roller.dicePool;
+}
+
 class GameRoom {
     constructor(gameRoomId, gameName, em) {
         this.gameRoomId = gameRoomId;
@@ -84,10 +139,56 @@ class GameRoom {
         this.drama = 0;
         this.gameState = 'Downtime';
         this.createdAt = new Date();
+        this.dicePool = {
+            hero: 2,
+            red: 0,
+            black: 0,
+        };
     }
 
     addHero(hero) {
         this.heroes.push(hero);
+    }
+
+    actionRoll = () => {
+        this.dicePool.hero++;
+        let diceResults = rollDice(this);
+        this.momentum += diceResults.suns;
+        this.drama += diceResults.skulls;
+        return diceResults;
+    }
+
+    forcedRoll = () => {
+        return forcedRoll(this);
+    }
+
+     // ALTER DICE POOL METHODS --------------
+    setDicePool = (dicePool) => {
+        setDicePool(this, dicePool);
+    }
+    
+    replaceForRedDie = () => {
+        return replaceForRedDie(this);
+    }
+
+    replaceForBlackDie = () => {
+        return replaceForBlackDie(this);
+    }
+
+    addRedDie = () => {
+        return addRedDie(this);
+    }
+
+    subtractRedDie = () => {
+        return subtractRedDie(this);
+    }
+
+    addBlackDie = () => {
+        return addBlackDie(this);
+    }
+
+    subtractBlackDie = () => {
+        return subtractBlackDie(this);
     }
 
     alterDread = (amount) => {
@@ -96,6 +197,34 @@ class GameRoom {
         }
         this.dread += amount;
         return this.dread;
+    }
+
+    spendMomentum = (amount) => {
+        if (amount > this.momentum) {
+            throw new Error('Not enough Momentum to spend');
+        }
+        this.momentum -= amount;
+        return this.momentum;
+    }
+
+    setMomentum = (amount) => {
+        if (amount < 0) {
+            throw new Error('Momentum cannot be negative');
+        }
+        this.momentum = amount;
+        return this.momentum;
+    }
+
+    alterDrama = (amount) => {
+        if (amount < 0 && Math.abs(amount) > this.drama) {
+            throw new Error('Not enough Drama to spend');
+        }
+        this.drama += amount;
+        return this.drama;
+    }
+
+    setDicePool = (dicePool) => {
+        setDicePool(this, dicePool);
     }
 }
 
@@ -114,17 +243,6 @@ class Hero {
         this.heroPathId = heroPathId;
     }
 
-    forcedRoll = () => {
-        let success = true;
-        let results = rollDice(this);
-        
-        if (results.skulls > results.suns) {
-            success = false;
-        }
-        results.success = success;
-        return results;
-    }
-
     // Perform an Action Roll, adding one Hero Die to the pool
     actionRoll = () => {
         this.dicePool.hero++;
@@ -138,48 +256,37 @@ class Hero {
         return diceResults;
     }
 
+    forcedRoll = () => {
+        return forcedRoll(this);
+    }
+
+    // ALTER DICE POOL METHODS --------------
     setDicePool = (dicePool) => {
-        this.dicePool = dicePool;
+        setDicePool(this, dicePool);
     }
     
     replaceForRedDie = () => {
-        if (this.dicePool.hero > 0) {
-            this.dicePool.hero--;
-            this.dicePool.red++;
-        }
-        return this.dicePool;
+        return replaceForRedDie(this);
     }
 
     replaceForBlackDie = () => {
-        if (this.dicePool.hero > 0) {
-            this.dicePool.hero--;
-            this.dicePool.black++;
-        }
-        return this.dicePool;
+        return replaceForBlackDie(this);
     }
 
     addRedDie = () => {
-        this.dicePool.red++;
-        return this.dicePool;
+        return addRedDie(this);
     }
 
     subtractRedDie = () => {
-        if (this.dicePool.red > 0) {
-            this.dicePool.red--;
-        }
-        return this.dicePool;
+        return subtractRedDie(this);
     }
 
     addBlackDie = () => {
-        this.dicePool.black++;
-        return this.dicePool;
+        return addBlackDie(this);
     }
 
     subtractBlackDie = () => {
-        if (this.dicePool.black > 0) {
-            this.dicePool.black--;
-        }
-        return this.dicePool;
+        return subtractBlackDie(this);
     }
 
     setHope = (amount) => {

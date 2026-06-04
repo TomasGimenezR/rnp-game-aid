@@ -60,7 +60,7 @@
           <h1 id="currentRoomName" class="gameRoom-title"></h1>
           <div class="game-mode-indicator" id="gameModeIndicator">
             <span class="mode-label">Mode:</span>
-            <span class="mode-value" id="gameModeDisplay">Combat</span>
+            <span class="mode-value" id="gameModeDisplay">Downtime</span>
           </div>
           <div class="em-status" id="emStatus" style="display: none;"></div>
         </div>
@@ -68,13 +68,21 @@
       </div>
 
       <div class="hope-tracker-bar">
-        <div class="tracker-left">
-          <span class="hope-label">Hope:</span>
-          <span class="hope-value" id="hopeTracker">0</span>
+        <div class="tracker-left" id="leftTrackerCombat" style="display: flex;">
+          <span class="counter-label">Hope:</span>
+          <span class="counter-value" id="hopeTracker">0</span>
         </div>
-        <div class="tracker-right">
-          <span class="dread-label">Dread:</span>
-          <span class="dread-value" id="dreadTracker">0</span>
+        <div class="tracker-left" id="leftTrackerDowntime" style="display: none;">
+          <span class="counter-label">Momentum:</span>
+          <span class="counter-value" id="momentumTracker">0</span>
+        </div>
+        <div class="tracker-right" id="rightTrackerCombat" style="display: flex;">
+          <span class="counter-label">Dread:</span>
+          <span class="counter-value" id="dreadTracker">0</span>
+        </div>
+        <div class="tracker-right" id="rightTrackerDowntime" style="display: none;">
+          <span class="counter-label">Drama:</span>
+          <span class="counter-value" id="dramaTracker">0</span>
         </div>
       </div>
 
@@ -107,12 +115,19 @@
             <button onclick="setDice()" class="accent-btn">Set Dice Pool</button>
           </div>
 
-          <div class="action-group">
-            <h4>Hope</h4>
+          <div class="action-group" id="combatActionGroup">
+            <h4>Hope & Dread</h4>
             <button onclick="spendHope()">Spend Hope</button>
             <button onclick="addOneHope()">+1 Hope</button>
             <button onclick="setHope()">Set Hope</button>
             <button onclick="alterDread()">Alter Dread</button>
+          </div>
+          <div class="action-group" id="downtimeActionGroup" style="display: none;">
+            <h4>Momentum & Drama</h4>
+            <button onclick="spendMomentum()">Spend Momentum</button>
+            <button onclick="addOneMomentum()">+1 Momentum</button>
+            <button onclick="setMomentum()">Set Momentum</button>
+            <button onclick="alterDrama()">Alter Drama</button>
           </div>
         </div>
       </div>

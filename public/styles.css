@@ -293,11 +293,11 @@ body {
   gap: 15px;
 }
 
-.hope-label, .dread-label {
+.counter-label {
   color: var(--white);
 }
 
-.hope-value, .dread-value {
+.counter-value {
   color: var(--blazing-flame);
   font-size: 28px;
 }
