@@ -293,11 +293,11 @@ body {
   gap: 15px;
 }
 
-.hope-label, .dread-label {
+.counter-label {
   color: var(--white);
 }
 
-.hope-value, .dread-value {
+.counter-value {
   color: var(--blazing-flame);
   font-size: 28px;
 }
@@ -457,6 +457,20 @@ body {
 
 .accent-btn:hover {
   background: #e63100 !important;
+}
+
+.gray-btn {
+  background: #888 !important;
+  color: var(--white) !important;
+  border: none !important;
+}
+
+.gray-btn:hover {
+  background: #666 !important;
+}
+
+.full-width {
+  grid-column: 1 / -1 !important;
 }
 
 /* Shared Styles */

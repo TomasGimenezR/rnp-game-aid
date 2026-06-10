@@ -2,7 +2,7 @@ const socket = io();
 let currentUser = null;
 let currentGameRoom = null;
 let pendingGameRoomJoin = null;
-let currentGameMode = 'combat';
+let currentGameMode = 'Downtime';
 
 // DOM Elements
 const loginPage = document.getElementById('loginPage');
@@ -20,6 +20,8 @@ const messageInput = document.getElementById('messageInput');
 const messages = document.getElementById('messages');
 const hopeTracker = document.getElementById('hopeTracker');
 const dreadTracker = document.getElementById('dreadTracker');
+const momentumTracker = document.getElementById('momentumTracker');
+const dramaTracker = document.getElementById('dramaTracker');
 const currentGameRoomName = document.getElementById('currentGameRoomName');
 
 // Socket event listeners
@@ -54,13 +56,17 @@ socket.on('create:gameRoom', (data) => {
 });
 
 socket.on('join:gameRoom', (data) => {
-  currentGameRoom = { gameRoomId: data.gameRoomId, name: data.gameRoomName, members: data.members, emOnline: data.emOnline };
-  hopeTracker.textContent = data.hero.hope;
-  showSuccess(`Joined gameRoom "${data.gameRoomName}"`);
+  const { gameRoom, hero, players, emOnline } = data;
+  hopeTracker.textContent = hero.hope;
+  momentumTracker.textContent = gameRoom.momentum || 0;
+  dramaTracker.textContent = gameRoom.drama || 0;
+  showSuccess(`Joined gameRoom "${gameRoom.name}"`);
   closeHeroNameModal();
   showPage('gameRoomPage');
   messages.innerHTML = '';
   updateGameRoomHeader();
+  updateGameModeInDisplay(currentGameRoom.gameState);
+  // updateGameModeInDisplay(gameRoom.gameState);
 });
 
 socket.on('player_joined', (data) => {
@@ -68,6 +74,7 @@ socket.on('player_joined', (data) => {
     showPage('gameRoomPage');
     messages.innerHTML = '';
     updateGameRoomHeader();
+    updateGameModeInDisplay(currentGameRoom.gameState);
   }
 })
 
@@ -76,6 +83,7 @@ socket.on('gameRoom_members_updated', (data) => {
     currentGameRoom.members = data.members;
     currentGameRoom.emOnline = data.emOnline;
     updateGameRoomHeader();
+    updateGameModeInDisplay(currentGameRoom.gameState);
   }
 });
 
@@ -103,16 +111,23 @@ socket.on('new_message', (data) => {
 });
 
 socket.on('action_roll_result', (data) => {
-  const { text, madeAnEscape, dread } = data;
+  const { text, madeAnEscape, room } = data;
   let { hero } = data;
   if (hero == null)
     hero = { name: 'Unknown Hero' };
-  dreadTracker.textContent = dread;
+  if (room) {
+    if (room.gameState === 'Combat')
+      dreadTracker.textContent = room.dread;
+    else if (room.gameState === 'Downtime') {
+      momentumTracker.textContent = room.momentum;
+      dramaTracker.textContent = room.drama;
+    }
+  }
   const messageEl = document.createElement('div');
   messageEl.className = 'message';
   messageEl.innerHTML = `
-    <div class="message-heroname">${escapeHtml(hero.name)}</div>
-    <div class="message-text"><strong>Action Roll Results:</strong> ${text}</div>
+    <div class="message-heroname">${escapeHtml(hero.name)} ${room.gameState === 'Combat' ? 'Combat' : 'Downtime'} Roll!</div>
+    <div class="message-text"><strong>Results:</strong> ${text}</div>
     ${madeAnEscape ? '<div class="message-escape"><em> Made an Escape! </em></div>' : ''}
   `;
   messages.appendChild(messageEl);
@@ -130,7 +145,7 @@ socket.on('update:hero', (data) => {
 });
 
 socket.on('update:currencies', (data) => {
-  const { hero, dread } = data;
+  const { hero, dread, buzz } = data;
   if (hero)
     hopeTracker.textContent = hero.hope;
   if (dread)
@@ -139,10 +154,42 @@ socket.on('update:currencies', (data) => {
   messageEl.className = 'message';
   messageEl.innerHTML = `
     <div class="message-heroname">${escapeHtml(hero? hero.name: "EM")}</div>
-    <div class="message-text"><strong>${hero ? 'Spent Hope!' : 'Spent Dread!'}</strong></div>
+    <div class="message-text"><strong>${hero ? 'Spent Hope!' : 'Altered Dread!'}</strong></div>
   `;
   messages.appendChild(messageEl);
   messages.scrollTop = messages.scrollHeight;
+
+  // Buzz screens
+  if (buzz) {
+    gameRoomContainer.classList.add('buzz');
+    setTimeout(() => {
+      gameRoomContainer.classList.remove('buzz');
+    }, 500);
+  }
+});
+
+socket.on('update:drama_currencies', (data) => {
+  const { momentum, drama, buzz } = data;
+  if (momentum !== undefined)
+    momentumTracker.textContent = momentum;
+  if (drama !== undefined)
+    dramaTracker.textContent = drama;
+
+  const messageEl = document.createElement('div');
+  messageEl.className = 'message';
+  messageEl.innerHTML = `
+    <div class="message-heroname">EM</div>
+    <div class="message-text"><strong>${momentum !== undefined ? 'Altered Momentum!' : 'Altered Drama!'}</strong></div>
+  `;
+  messages.appendChild(messageEl);
+  messages.scrollTop = messages.scrollHeight;
+
+  if (buzz) {
+    gameRoomContainer.classList.add('buzz');
+    setTimeout(() => {
+      gameRoomContainer.classList.remove('buzz');
+    }, 500);
+  }
 });
 
 socket.on('dice_pool_updated', (data) => {
@@ -174,19 +221,27 @@ socket.on('error', (error) => {
   showError(error);
 });
 
-socket.on('game_mode_changed', (data) => {
-  const { mode } = data;
-  updateGameMode(mode);
+socket.on('gameRoom:gameState:toggle', (data) => {
+  const { gameState } = data;
+  updateGameModeInDisplay(gameState);
+  
+  const messageEl = document.createElement('div');
+  messageEl.className = 'message';
+  messageEl.innerHTML = `
+    <div class="message-text"><strong>GAME MODE CHANGED: ${gameState}</strong></div>
+  `;
+  messages.appendChild(messageEl);
+  messages.scrollTop = messages.scrollHeight;
 });
 
-socket.on('update:currencies', (data) => {
-  if (data.dread != null) {
-    gameRoomContainer.classList.add('buzz');
-    setTimeout(() => {
-      gameRoomContainer.classList.remove('buzz');
-    }, 500);
-  }
-});
+// socket.on('update:currencies', (data) => {
+//   if (data.dread != null) {
+//     gameRoomContainer.classList.add('buzz');
+//     setTimeout(() => {
+//       gameRoomContainer.classList.remove('buzz');
+//     }, 500);
+//   }
+// });
 
 // Functions
 function showPage(pageName) {
@@ -287,18 +342,28 @@ function leaveGameRoom() {
 }
 
 function toggleGameMode() {
-  const newMode = currentGameMode === 'combat' ? 'downtime' : 'combat';
-  socket.emit('change_game_mode', { mode: newMode });
+  socket.emit('gameRoom:gameState:toggle', { });
 }
 
-function updateGameMode(mode) {
+function updateGameModeInDisplay(mode) {
   currentGameMode = mode;
   const modeDisplay = document.getElementById('gameModeDisplay');
   modeDisplay.textContent = mode.charAt(0).toUpperCase() + mode.slice(1);
-  modeDisplay.classList.remove('downtime');
-  if (mode === 'downtime') {
+
+  if (mode === 'combat')
+    modeDisplay.classList.remove('downtime');
+  else
     modeDisplay.classList.add('downtime');
-  }
+
+  const isDowntime = mode.toLowerCase() === 'downtime';
+
+  document.getElementById('leftTrackerCombat').style.display = isDowntime ? 'none' : 'flex';
+  document.getElementById('leftTrackerDowntime').style.display = isDowntime ? 'flex' : 'none';
+  document.getElementById('rightTrackerCombat').style.display = isDowntime ? 'none' : 'flex';
+  document.getElementById('rightTrackerDowntime').style.display = isDowntime ? 'flex' : 'none';
+
+  document.getElementById('combatActionGroup').style.display = isDowntime ? 'none' : 'block';
+  document.getElementById('downtimeActionGroup').style.display = isDowntime ? 'block' : 'none';
 }
 
 function sendMessage() {
@@ -429,6 +494,46 @@ function spendDread() {
     return;
   }
   socket.emit('spend:dread', parseInt(dreadSpent));
+}
+
+alterDread = () => {
+  const dreadChange = prompt("Alter Dread by how much? (Enter a number, use negative to reduce)");
+  if (!dreadChange || isNaN(dreadChange)) {
+    showError('Please enter a valid number for Dread alteration');
+    return;
+  }
+  socket.emit('alter:dread', parseInt(dreadChange));
+}
+
+function addOneMomentum() {
+  socket.emit('set:momentum', "+1");
+}
+
+function setMomentum() {
+  const momentumValue = prompt("Set Momentum to what value? (Enter a number)");
+  if (!momentumValue || isNaN(momentumValue) || parseInt(momentumValue) < 0) {
+    showError('Please enter a valid number for Momentum');
+    return;
+  }
+  socket.emit('set:momentum', parseInt(momentumValue));
+}
+
+function spendMomentum() {
+  const momentumSpent = prompt("How much Momentum are you spending? (Enter a number)");
+  if (!momentumSpent || isNaN(momentumSpent) || parseInt(momentumSpent) < 0) {
+    showError('Please enter a valid number for Momentum');
+    return;
+  }
+  socket.emit('spend:momentum', parseInt(momentumSpent));
+}
+
+function alterDrama() {
+  const dramaChange = prompt("Alter Drama by how much? (Enter a number, use negative to reduce)");
+  if (!dramaChange || isNaN(dramaChange)) {
+    showError('Please enter a valid number for Drama alteration');
+    return;
+  }
+  socket.emit('alter:drama', parseInt(dramaChange));
 }
 
 function escapeHtml(text) {

@@ -60,7 +60,7 @@
           <h1 id="currentRoomName" class="gameRoom-title"></h1>
           <div class="game-mode-indicator" id="gameModeIndicator">
             <span class="mode-label">Mode:</span>
-            <span class="mode-value" id="gameModeDisplay">Combat</span>
+            <span class="mode-value" id="gameModeDisplay">Downtime</span>
           </div>
           <div class="em-status" id="emStatus" style="display: none;"></div>
         </div>
@@ -68,13 +68,21 @@
       </div>
 
       <div class="hope-tracker-bar">
-        <div class="tracker-left">
-          <span class="hope-label">Hope:</span>
-          <span class="hope-value" id="hopeTracker">0</span>
+        <div class="tracker-left" id="leftTrackerCombat" style="display: flex;">
+          <span class="counter-label">Hope:</span>
+          <span class="counter-value" id="hopeTracker">0</span>
         </div>
-        <div class="tracker-right">
-          <span class="dread-label">Dread:</span>
-          <span class="dread-value" id="dreadTracker">0</span>
+        <div class="tracker-left" id="leftTrackerDowntime" style="display: none;">
+          <span class="counter-label">Momentum:</span>
+          <span class="counter-value" id="momentumTracker">0</span>
+        </div>
+        <div class="tracker-right" id="rightTrackerCombat" style="display: flex;">
+          <span class="counter-label">Dread:</span>
+          <span class="counter-value" id="dreadTracker">0</span>
+        </div>
+        <div class="tracker-right" id="rightTrackerDowntime" style="display: none;">
+          <span class="counter-label">Drama:</span>
+          <span class="counter-value" id="dramaTracker">0</span>
         </div>
       </div>
 
@@ -93,7 +101,7 @@
             <h4>Roll</h4>
             <button onclick="actionRoll()" class="primary-btn">Action Roll!</button>
             <button onclick="forcedRoll()" class="primary-btn">Forced Roll!</button>
-            <button onclick="resetDicePool()" class="full-width-btn">Reset Dice Pool</button>
+            <button onclick="resetDicePool()" class="gray-btn full-width">Reset Dice Pool</button>
           </div>
 
           <div class="action-group">
@@ -104,15 +112,22 @@
             <button onclick="addBlackDie()" class="accent-btn">+⬛</button>
             <button onclick="subtractRedDie()" class="accent-btn">-🟥</button>
             <button onclick="subtractBlackDie()" class="accent-btn">-⬛</button>
-            <button onclick="setDice()" class="accent-btn">Set Dice Pool</button>
+            <button onclick="setDice()" class="gray-btn full-width">Set Dice Pool</button>
           </div>
 
-          <div class="action-group">
-            <h4>Hope</h4>
-            <button onclick="spendHope()">Spend Hope</button>
-            <button onclick="addOneHope()">+1 Hope</button>
-            <button onclick="setHope()">Set Hope</button>
-            <button onclick="spendDread()">Spend Dread</button>
+          <div class="action-group" id="combatActionGroup" style="display: none;">
+            <h4>Hope & Dread</h4>
+            <button onclick="spendHope()" class="primary-btn">Spend Hope</button>
+            <button onclick="addOneHope()" class="primary-btn">+1 Hope</button>
+            <button onclick="setHope()" class="primary-btn">Set Hope</button>
+            <button onclick="alterDread()" class="accent-btn">Alter Dread</button>
+          </div>
+          <div class="action-group" id="downtimeActionGroup">
+            <h4>Momentum & Drama</h4>
+            <button onclick="spendMomentum()" class="primary-btn">Spend Momentum</button>
+            <button onclick="addOneMomentum()" class="primary-btn">+1 Momentum</button>
+            <button onclick="setMomentum()" class="primary-btn">Set Momentum</button>
+            <button onclick="alterDrama()" class="accent-btn">Alter Drama</button>
           </div>
         </div>
       </div>
