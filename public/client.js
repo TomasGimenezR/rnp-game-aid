@@ -65,7 +65,8 @@ socket.on('join:gameRoom', (data) => {
   showPage('gameRoomPage');
   messages.innerHTML = '';
   updateGameRoomHeader();
-  updateGameModeInDisplay(gameRoom.gameState);
+  updateGameModeInDisplay(currentGameRoom.gameState);
+  // updateGameModeInDisplay(gameRoom.gameState);
 });
 
 socket.on('player_joined', (data) => {

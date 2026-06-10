@@ -101,7 +101,7 @@
             <h4>Roll</h4>
             <button onclick="actionRoll()" class="primary-btn">Action Roll!</button>
             <button onclick="forcedRoll()" class="primary-btn">Forced Roll!</button>
-            <button onclick="resetDicePool()" class="full-width-btn">Reset Dice Pool</button>
+            <button onclick="resetDicePool()" class="gray-btn full-width">Reset Dice Pool</button>
           </div>
 
           <div class="action-group">
@@ -112,22 +112,22 @@
             <button onclick="addBlackDie()" class="accent-btn">+⬛</button>
             <button onclick="subtractRedDie()" class="accent-btn">-🟥</button>
             <button onclick="subtractBlackDie()" class="accent-btn">-⬛</button>
-            <button onclick="setDice()" class="accent-btn">Set Dice Pool</button>
+            <button onclick="setDice()" class="gray-btn full-width">Set Dice Pool</button>
           </div>
 
-          <div class="action-group" id="combatActionGroup">
+          <div class="action-group" id="combatActionGroup" style="display: none;">
             <h4>Hope & Dread</h4>
-            <button onclick="spendHope()">Spend Hope</button>
-            <button onclick="addOneHope()">+1 Hope</button>
-            <button onclick="setHope()">Set Hope</button>
-            <button onclick="alterDread()">Alter Dread</button>
+            <button onclick="spendHope()" class="primary-btn">Spend Hope</button>
+            <button onclick="addOneHope()" class="primary-btn">+1 Hope</button>
+            <button onclick="setHope()" class="primary-btn">Set Hope</button>
+            <button onclick="alterDread()" class="accent-btn">Alter Dread</button>
           </div>
-          <div class="action-group" id="downtimeActionGroup" style="display: none;">
+          <div class="action-group" id="downtimeActionGroup">
             <h4>Momentum & Drama</h4>
-            <button onclick="spendMomentum()">Spend Momentum</button>
-            <button onclick="addOneMomentum()">+1 Momentum</button>
-            <button onclick="setMomentum()">Set Momentum</button>
-            <button onclick="alterDrama()">Alter Drama</button>
+            <button onclick="spendMomentum()" class="primary-btn">Spend Momentum</button>
+            <button onclick="addOneMomentum()" class="primary-btn">+1 Momentum</button>
+            <button onclick="setMomentum()" class="primary-btn">Set Momentum</button>
+            <button onclick="alterDrama()" class="accent-btn">Alter Drama</button>
           </div>
         </div>
       </div>

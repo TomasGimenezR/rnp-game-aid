@@ -115,14 +115,15 @@ io.on('connection', (socket) => {
         }
     }
 
+        // Create Hero
+    const hero = new Hero({ name: heroName, archetypeId: heroArchetypeId, heroPathId: heroPathId });
+    user.hero = hero; // Store hero object in user data for later use
+    socket.hero = hero; // Store hero object for later use
+
     // Join new gameRoom
     user.activeGameRoomId = gameRoomId;
     gameRoom.heroes.push(user);
     socket.join(gameRoomId);
-
-    // Create Hero
-    const hero = new Hero({ name: heroName, archetypeId: heroArchetypeId, heroPathId: heroPathId });
-    socket.hero = hero; // Store hero object for later use
 
     // Auto-join EM to gameRoom if online
     let emOnline = false;
@@ -594,11 +595,8 @@ io.on('connection', (socket) => {
 
     // Reset Combat Dice Pools when leaving Combat
     if (gameRoom.gameState === 'Combat') {
-      console.log('Changing game state from', gameRoom.gameState);
-      gameRoom.heroes.forEach(heroUser => {
-        // console.log('Hero: ', heroUser)
-        
-        // socket.hero.setDicePool({ hero: 2, red: 0, black: 0 });
+      gameRoom.heroes.forEach(heroUser => {        
+        heroUser.hero.setDicePool({ hero: 2, red: 0, black: 0 }); // TODO: Not working
       });
     }
 
