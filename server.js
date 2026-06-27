@@ -169,7 +169,10 @@ io.on('connection', (socket) => {
 
     if (gameRoom.gameState === 'Combat'){
       rollResults = hero.actionRoll();
-      gameRoom.dread += rollResults.skulls; // Add Dread to gameRoom based on skulls rolled
+      if ((rollResults.skulls + gameRoom.dread) > 12)
+        gameRoom.dread = 12; // Cap at 12 Dread
+      else
+        gameRoom.dread += rollResults.skulls; // Add Dread to gameRoom based on skulls rolled
     } else {
       rollResults = gameRoom.actionRoll(); // Add Momentum and Drama to gameRoom during Downtime
     }

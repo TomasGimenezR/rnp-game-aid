@@ -154,7 +154,10 @@ class GameRoom {
         this.dicePool.hero++;
         let diceResults = rollDice(this);
         this.momentum += diceResults.suns;
-        this.drama += diceResults.skulls;
+        if ((diceResults.skulls + this.drama) > 12)
+            this.drama = 12;
+        else
+            this.drama += diceResults.skulls;
         return diceResults;
     }
 
