@@ -367,7 +367,7 @@ io.on('connection', (socket) => {
         const hero = socket.hero;
         const gameRoom = gameRoomsList.get(user.activeGameRoomId);
         let dicePool;
-        if (!user || !user.activeGameRoomId) {
+        if (!gameRoom || !user || !user.activeGameRoomId) {
         socket.emit('error', 'Not in a Game Room');
         return;
         }
@@ -376,12 +376,11 @@ io.on('connection', (socket) => {
             return;
         }
 
-        if (!gameRoom && gameRoom.gameState === 'Combat') {
-        dicePool = hero.setDicePool({ hero: 2, red: 0, black: 0 });
-        } else {
-        dicePool = gameRoom.setDicePool({ hero: 2, red: 0, black: 0 });
-        }
-        io.to(user.activeGameRoomId).emit('dice_pool_reset', { heroName: hero.name, dicePool });
+        if (gameRoom.gameState === 'Combat')
+          dicePool = hero.setDicePool({ hero: 2, red: 0, black: 0 });
+        else
+          dicePool = gameRoom.setDicePool({ hero: 2, red: 0, black: 0 });
+        io.to(user.activeGameRoomId).emit('dice_pool_reset', { heroName: hero.name });
     });
 
   socket.on('set:hope', (hope) => {
