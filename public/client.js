@@ -49,7 +49,17 @@ socket.on('login_error', (error) => {
 });
 
 socket.on('create:gameRoom', (data) => {
-  currentGameRoom = { gameRoomId: data.gameRoomId, name: data.gameRoomName, members: data.members, emOnline: data.emOnline };
+  // Ensure the creator has a complete currentGameRoom object (defaults match server GameRoom initial state)
+  currentGameRoom = {
+    gameRoomId: data.gameRoomId,
+    name: data.gameRoomName,
+    members: data.members || [],
+    emOnline: data.emOnline,
+    gameState: 'Downtime',
+    momentum: 0,
+    drama: 0,
+    dread: 0
+  };
   showSuccess(`Game Room "${data.gameRoomName}" created!`);
   closeCreateGameRoomModal();
   getGameRooms();
@@ -57,6 +67,8 @@ socket.on('create:gameRoom', (data) => {
 
 socket.on('join:gameRoom', (data) => {
   const { gameRoom, hero, players, emOnline } = data;
+  // save the current game room locally so display updates can reference it
+  currentGameRoom = gameRoom;
   hopeTracker.textContent = hero.hope;
   momentumTracker.textContent = gameRoom.momentum || 0;
   dramaTracker.textContent = gameRoom.drama || 0;
@@ -346,16 +358,20 @@ function toggleGameMode() {
 }
 
 function updateGameModeInDisplay(mode) {
-  currentGameMode = mode;
+  // default to Downtime if no mode provided
+  const modeStr = String(mode || 'Downtime');
+  currentGameMode = modeStr;
   const modeDisplay = document.getElementById('gameModeDisplay');
-  modeDisplay.textContent = mode.charAt(0).toUpperCase() + mode.slice(1);
+  modeDisplay.textContent = modeStr.charAt(0).toUpperCase() + modeStr.slice(1);
 
-  if (mode === 'combat')
+  // normalize casing for comparisons
+  const modeLower = modeStr.toLowerCase();
+  if (modeLower === 'combat')
     modeDisplay.classList.remove('downtime');
   else
     modeDisplay.classList.add('downtime');
 
-  const isDowntime = mode.toLowerCase() === 'downtime';
+  const isDowntime = modeLower === 'downtime';
 
   document.getElementById('leftTrackerCombat').style.display = isDowntime ? 'none' : 'flex';
   document.getElementById('leftTrackerDowntime').style.display = isDowntime ? 'flex' : 'none';
@@ -399,7 +415,8 @@ function displayGameRooms(gameRoomsList_data) {
 
 function updateGameRoomHeader() {
   if (currentGameRoom) {
-    currentRoomName.textContent = currentGameRoom.name;
+    if (currentGameRoomName)
+      currentGameRoomName.textContent = currentGameRoom.name;
     const emStatusEl = document.getElementById('emStatus');
     if (emStatusEl) {
       emStatusEl.textContent = currentGameRoom.emOnline ? '' : 'EM offline';
