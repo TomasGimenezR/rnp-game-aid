@@ -237,6 +237,7 @@ class Hero {
         this.archetypeId = archetypeId;
         this.hp = -1;
         this.hope = 0;
+        this.roundCoin = false;
         this.qualities = [];
         this.dicePool = {
             hero: 2,
@@ -246,15 +247,23 @@ class Hero {
         this.heroPathId = heroPathId;
     }
 
+    flipRoundCoin = () => {
+        this.roundCoin = true;
+        this.hope += 1;
+    }
+
     // Perform an Action Roll, adding one Hero Die to the pool
     actionRoll = () => {
         this.dicePool.hero++;
         let madeAnEscape = false;
         let diceResults = rollDice(this);
         this.hope += diceResults.suns;
+        if (!this.roundCoin) {
+            this.flipRoundCoin();
+        }
         if (diceResults.skulls == 0) 
             madeAnEscape = true;
-        
+
         diceResults.madeAnEscape = madeAnEscape;
         return diceResults;
     }

@@ -302,6 +302,33 @@ body {
   font-size: 28px;
 }
 
+/* Room Occupants */
+.room-occupants {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 30px;
+  background: #1a1a1a;
+}
+
+.occupant-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 14px;
+  background: var(--pacific-blue);
+  color: var(--white);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.occupant-badge.occupant-em {
+  background: var(--blazing-flame);
+}
+
 /* Room Content */
 .gameRoom-content {
   display: grid;

@@ -28,6 +28,23 @@ app.use(express.static(join(__dirname, 'public')));
 const users = new Map(); // userId -> { username, socketId, activeGameRoomId }
 const gameRoomsList = new Map(); // gameId -> { name, creator, members: Set, gameState: 'Combat'|'Downtime' }
 
+function getOccupantsPayload(gameRoom) {
+  const emSocket = io.sockets.sockets.get(gameRoom.em.socketId);
+  const em = emSocket ? { username: gameRoom.em.username } : null;
+  const heroes = gameRoom.heroes.map(u => ({
+    name: u.hero?.name,
+    username: u.username,
+    roundCoin: !!u.hero?.roundCoin
+  }));
+  return { em, heroes };
+}
+
+function broadcastOccupants(gameRoomId) {
+  const gameRoom = gameRoomsList.get(gameRoomId);
+  if (!gameRoom) return;
+  io.to(gameRoomId).emit('gameRoom:occupants', getOccupantsPayload(gameRoom));
+}
+
 // Socket.io connection handling
 io.on('connection', (socket) => {
   console.log(`🌐 User connected: ${socket.id}`);
@@ -137,6 +154,7 @@ io.on('connection', (socket) => {
     const players = gameRoom.heroes.map(heroUser => heroUser.username);
     socket.emit('join:gameRoom', { gameRoom, hero, players, emOnline });
     io.to(gameRoomId).emit('update:gameRoom', { gameRoomId, members: players, emOnline });
+    broadcastOccupants(gameRoomId);
 
     console.log(`💠 ${user.username} joined gameRoom: ${gameRoom.name}`);
   });
@@ -173,12 +191,27 @@ io.on('connection', (socket) => {
         gameRoom.dread = 12; // Cap at 12 Dread
       else
         gameRoom.dread += rollResults.skulls; // Add Dread to gameRoom based on skulls rolled
+
+      // When every hero has flipped their round token, the round ends: reset all tokens and grant +1 Hope each
+      const roundComplete = gameRoom.heroes.length > 0 && gameRoom.heroes.every(u => u.hero && u.hero.roundCoin);
+      if (roundComplete) {
+        gameRoom.heroes.forEach(u => {
+          u.hero.roundCoin = false;
+          u.hero.hope += 1;
+          io.to(u.socketId).emit('show:hope', { hero: u.hero });
+        });
+        gameRoom.dread += gameRoom.heroes.length; // Add Dread to gameRoom based on number of heroes
+        if (gameRoom.dread > 12)
+          gameRoom.dread = 12;
+        io.to(user.activeGameRoomId).emit('round_complete', { gameRoomId: user.activeGameRoomId });
+      }
     } else {
       rollResults = gameRoom.actionRoll(); // Add Momentum and Drama to gameRoom during Downtime
     }
     const text = ` ${rollResults.heroDiceResults.join(' ')} ${rollResults.redDiceResults.join(' ')} ${rollResults.blackDiceResults.join(' ')}</br>Suns: ${rollResults.suns}</br>Skulls: ${rollResults.skulls}`;
     io.to(user.activeGameRoomId).emit('action_roll_result', { text, hero, madeAnEscape: rollResults.madeAnEscape, room: gameRoom });
     io.to(socket.id).emit('show:hope', { hero }); // Update Hope just for player rolling
+    broadcastOccupants(user.activeGameRoomId);
   });
 
   socket.on('forced_roll', () => {
@@ -573,6 +606,7 @@ io.on('connection', (socket) => {
 
     const heroesRemaining = Array.from(gameRoom.heroes).map(memberId => users.get(memberId)?.username);
     io.to(user.activeGameRoomId).emit('gameRoom_members_updated', { gameRoomId: user.activeGameRoomId, members: heroesRemaining });
+    broadcastOccupants(user.activeGameRoomId);
 
     if (gameRoom.heroes.size === 0) {
       gameRoomsList.delete(user.activeGameRoomId);
@@ -623,6 +657,7 @@ io.on('connection', (socket) => {
           }
           const memberNames = Array.from(gameRoom.heroes).map(memberId => users.get(memberId)?.username);
           io.to(user.activeGameRoomId).emit('gameRoom_members_updated', { gameRoomId: user.activeGameRoomId, members: memberNames });
+          broadcastOccupants(user.activeGameRoomId);
 
           if (gameRoom.heroes.size === 0) {
             gameRoomsList.delete(user.activeGameRoomId);

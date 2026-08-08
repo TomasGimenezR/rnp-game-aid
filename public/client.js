@@ -23,6 +23,7 @@ const dreadTracker = document.getElementById('dreadTracker');
 const momentumTracker = document.getElementById('momentumTracker');
 const dramaTracker = document.getElementById('dramaTracker');
 const currentGameRoomName = document.getElementById('currentGameRoomName');
+const roomOccupants = document.getElementById('roomOccupants');
 
 // Socket event listeners
 socket.on('connect', () => {
@@ -233,6 +234,22 @@ socket.on('error', (error) => {
   showError(error);
 });
 
+socket.on('round_complete', () => {
+  const messageEl = document.createElement('div');
+  messageEl.className = 'message';
+  messageEl.innerHTML = `
+    <div class="message-text"><strong>ROUND COMPLETE! All round tokens reset, everyone gains +1 Hope.</strong></div>
+  `;
+  messages.appendChild(messageEl);
+  messages.scrollTop = messages.scrollHeight;
+});
+
+socket.on('gameRoom:occupants', (data) => {
+  if (!currentGameRoom) return;
+  currentGameRoom.occupants = data;
+  renderOccupants();
+});
+
 socket.on('gameRoom:gameState:toggle', (data) => {
   const { gameState } = data;
   updateGameModeInDisplay(gameState);
@@ -349,6 +366,7 @@ function leaveGameRoom() {
   closeLeaveConfirmModal();
   socket.emit('leave:gameRoom');
   currentGameRoom = null;
+  roomOccupants.innerHTML = '';
   getGameRooms();
   showPage('gameRoomsPage');
 }
@@ -380,6 +398,25 @@ function updateGameModeInDisplay(mode) {
 
   document.getElementById('combatActionGroup').style.display = isDowntime ? 'none' : 'block';
   document.getElementById('downtimeActionGroup').style.display = isDowntime ? 'block' : 'none';
+
+  renderOccupants();
+}
+
+function renderOccupants() {
+  if (!currentGameRoom || !currentGameRoom.occupants) {
+    roomOccupants.innerHTML = '';
+    return;
+  }
+  const { em, heroes } = currentGameRoom.occupants;
+  const isCombat = currentGameMode === 'Combat';
+  const emBadge = em
+    ? `<div class="occupant-badge occupant-em">EM (${escapeHtml(em.username)})</div>`
+    : '';
+  const heroBadges = heroes.map(h => {
+    const token = isCombat ? (h.roundCoin ? '🟢 ' : '⚫ ') : '';
+    return `<div class="occupant-badge">${token}${escapeHtml(h.name)} (${escapeHtml(h.username)})</div>`;
+  }).join('');
+  roomOccupants.innerHTML = emBadge + heroBadges;
 }
 
 function sendMessage() {
