@@ -398,8 +398,8 @@ function updateGameModeInDisplay(mode) {
   document.getElementById('rightTrackerCombat').style.display = isDowntime ? 'none' : 'flex';
   document.getElementById('rightTrackerDowntime').style.display = isDowntime ? 'flex' : 'none';
 
-  document.getElementById('combatActionGroup').style.display = isDowntime ? 'none' : 'block';
-  document.getElementById('downtimeActionGroup').style.display = isDowntime ? 'block' : 'none';
+  document.getElementById('combatActionGroup').style.display = isDowntime ? 'none' : 'contents';
+  document.getElementById('downtimeActionGroup').style.display = isDowntime ? 'contents' : 'none';
   document.getElementById('flipRoundCoinBtn').style.display = isDowntime ? 'none' : 'inline-block';
 
   renderOccupants();

@@ -49,16 +49,22 @@ function broadcastOccupants(gameRoomId) {
 function checkRoundComplete(gameRoom, gameRoomId) {
   const roundComplete = gameRoom.heroes.length > 0 && gameRoom.heroes.every(u => u.hero && u.hero.roundCoin);
   if (!roundComplete) return;
-  gameRoom.heroes.forEach(u => {
-    u.hero.roundCoin = false;
-    u.hero.hope += 1;
-    io.to(u.socketId).emit('show:hope', { hero: u.hero });
-  });
-  const dreadGained = gameRoom.heroes.length; // Dread gained is equal to the number of heroes
-  gameRoom.dread += dreadGained; // Add Dread to gameRoom based on number of heroes
-  if (gameRoom.dread > 12)
-    gameRoom.dread = 12;
-  io.to(gameRoomId).emit('round_complete', { gameRoomId, dreadGained });
+
+  // Let clients see every coin flipped green for a moment before resetting the round
+  broadcastOccupants(gameRoomId);
+  setTimeout(() => {
+    gameRoom.heroes.forEach(u => {
+      u.hero.roundCoin = false;
+      u.hero.hope += 1;
+      io.to(u.socketId).emit('show:hope', { hero: u.hero });
+    });
+    const dreadGained = gameRoom.heroes.length; // Dread gained is equal to the number of heroes
+    gameRoom.dread += dreadGained; // Add Dread to gameRoom based on number of heroes
+    if (gameRoom.dread > 12)
+      gameRoom.dread = 12;
+    io.to(gameRoomId).emit('round_complete', { gameRoomId, dreadGained });
+    broadcastOccupants(gameRoomId);
+  }, 500);
 }
 
 // Socket.io connection handling
