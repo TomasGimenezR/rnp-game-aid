@@ -500,6 +500,15 @@ body {
   grid-column: 1 / -1 !important;
 }
 
+.dice-reset-row {
+  display: flex;
+  gap: 12px;
+}
+
+.dice-reset-row button {
+  flex: 1;
+}
+
 /* Shared Styles */
 .header {
   text-align: center;

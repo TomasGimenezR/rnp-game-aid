@@ -45,6 +45,22 @@ function broadcastOccupants(gameRoomId) {
   io.to(gameRoomId).emit('gameRoom:occupants', getOccupantsPayload(gameRoom));
 }
 
+// When every hero has flipped their round token, the round ends: reset all tokens and grant +1 Hope each
+function checkRoundComplete(gameRoom, gameRoomId) {
+  const roundComplete = gameRoom.heroes.length > 0 && gameRoom.heroes.every(u => u.hero && u.hero.roundCoin);
+  if (!roundComplete) return;
+  gameRoom.heroes.forEach(u => {
+    u.hero.roundCoin = false;
+    u.hero.hope += 1;
+    io.to(u.socketId).emit('show:hope', { hero: u.hero });
+  });
+  const dreadGained = gameRoom.heroes.length; // Dread gained is equal to the number of heroes
+  gameRoom.dread += dreadGained; // Add Dread to gameRoom based on number of heroes
+  if (gameRoom.dread > 12)
+    gameRoom.dread = 12;
+  io.to(gameRoomId).emit('round_complete', { gameRoomId, dreadGained });
+}
+
 // Socket.io connection handling
 io.on('connection', (socket) => {
   console.log(`🌐 User connected: ${socket.id}`);
@@ -192,25 +208,34 @@ io.on('connection', (socket) => {
       else
         gameRoom.dread += rollResults.skulls; // Add Dread to gameRoom based on skulls rolled
 
-      // When every hero has flipped their round token, the round ends: reset all tokens and grant +1 Hope each
-      const roundComplete = gameRoom.heroes.length > 0 && gameRoom.heroes.every(u => u.hero && u.hero.roundCoin);
-      if (roundComplete) {
-        gameRoom.heroes.forEach(u => {
-          u.hero.roundCoin = false;
-          u.hero.hope += 1;
-          io.to(u.socketId).emit('show:hope', { hero: u.hero });
-        });
-        gameRoom.dread += gameRoom.heroes.length; // Add Dread to gameRoom based on number of heroes
-        if (gameRoom.dread > 12)
-          gameRoom.dread = 12;
-        io.to(user.activeGameRoomId).emit('round_complete', { gameRoomId: user.activeGameRoomId });
-      }
+      checkRoundComplete(gameRoom, user.activeGameRoomId);
     } else {
       rollResults = gameRoom.actionRoll(); // Add Momentum and Drama to gameRoom during Downtime
     }
     const text = ` ${rollResults.heroDiceResults.join(' ')} ${rollResults.redDiceResults.join(' ')} ${rollResults.blackDiceResults.join(' ')}</br>Suns: ${rollResults.suns}</br>Skulls: ${rollResults.skulls}`;
     io.to(user.activeGameRoomId).emit('action_roll_result', { text, hero, madeAnEscape: rollResults.madeAnEscape, room: gameRoom });
     io.to(socket.id).emit('show:hope', { hero }); // Update Hope just for player rolling
+    broadcastOccupants(user.activeGameRoomId);
+  });
+
+  socket.on('flip:roundCoin', () => {
+    const user = users.get(socket.id);
+    const hero = socket.hero;
+    if (!user || !user.activeGameRoomId) {
+      socket.emit('error', 'Not in a gameRoom');
+      return;
+    }
+    if (!hero) {
+      socket.emit('error', 'EMs don\'t have a Round Coin!');
+      return;
+    }
+    const gameRoom = gameRoomsList.get(user.activeGameRoomId);
+    if (!gameRoom || gameRoom.gameState !== 'Combat') {
+      socket.emit('error', 'Round Coin can only be flipped during Combat');
+      return;
+    }
+    hero.roundCoin = !hero.roundCoin;
+    checkRoundComplete(gameRoom, user.activeGameRoomId);
     broadcastOccupants(user.activeGameRoomId);
   });
 

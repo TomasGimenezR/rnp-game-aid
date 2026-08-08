@@ -234,11 +234,13 @@ socket.on('error', (error) => {
   showError(error);
 });
 
-socket.on('round_complete', () => {
+socket.on('round_complete', (data) => {
+  const { dreadGained } = data;
   const messageEl = document.createElement('div');
   messageEl.className = 'message';
   messageEl.innerHTML = `
-    <div class="message-text"><strong>ROUND COMPLETE! All round tokens reset, everyone gains +1 Hope.</strong></div>
+    <div class="message-text"><strong>ROUND COMPLETE!</strong></div>
+    <div class="message-text">All Round Coins reset, Heroes gains +1 Hope, and the EM gains ${ dreadGained } Dread.</div>
   `;
   messages.appendChild(messageEl);
   messages.scrollTop = messages.scrollHeight;
@@ -398,6 +400,7 @@ function updateGameModeInDisplay(mode) {
 
   document.getElementById('combatActionGroup').style.display = isDowntime ? 'none' : 'block';
   document.getElementById('downtimeActionGroup').style.display = isDowntime ? 'block' : 'none';
+  document.getElementById('flipRoundCoinBtn').style.display = isDowntime ? 'none' : 'inline-block';
 
   renderOccupants();
 }
@@ -493,6 +496,10 @@ function forcedRoll() {
 
 function resetDicePool() {
   socket.emit('reset_dice_pool');
+}
+
+function flipRoundCoin() {
+  socket.emit('flip:roundCoin');
 }
 
 function replaceForRedDie() {
